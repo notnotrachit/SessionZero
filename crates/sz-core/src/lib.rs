@@ -3,6 +3,7 @@
 pub mod adapter;
 pub mod adapters;
 pub mod cache;
+pub mod config;
 pub mod group;
 pub mod model;
 pub mod paths;
