@@ -116,9 +116,11 @@ Global flags work with every command:
 | `sz list [--sort KEY] [--limit N] [--filter REGEX]` | List sessions. `KEY` is `size`, `recent`, `oldest`, `messages` or `name` |
 | `sz clean [--older DUR] [--larger SIZE] [--project REGEX] [--no-project] [--dry-run] [--yes]` | Move sessions that match at least one rule to trash. A run with no rule is refused |
 | `sz trash` | Open the Trash screen |
-| `sz trash list` | List trash entries |
+| `sz trash list` | List trash entries, with when each one is auto-deleted |
 | `sz trash restore <id>` | Put an entry back where it was |
-| `sz trash empty [<id>] [--yes]` | Permanently delete one entry, or the whole trash |
+| `sz trash empty [<id>] [--older DUR] [--yes]` | Permanently delete one entry, the whole trash, or only entries trashed longer ago than `DUR` |
+| `sz config` | Show settings |
+| `sz config trash-retention <DAYS\|never>` | Set how long trashed sessions are kept before automatic deletion. `7`, `7d` and `never` are accepted. Default `30` |
 | `sz agents` | Show detected agents, running state, session counts and data roots |
 | `sz du` | Disk usage per agent and per project |
 | `sz preview <agent:id>` | Show metadata and the first messages of one session |
@@ -145,6 +147,7 @@ A parent session never moves without its child sessions.
 - **Running agents are guarded.** While an agent runs, SessionZero blocks sessions active in the last 2 hours, sessions with no known last activity, and sessions in a database the agent may write. Pass `--force` to override.
 - **Shared files are edited, not removed.** If a session shares a file or database with others, only that session's lines or rows are removed. The manifest logs these edits, and restore reverses them.
 - **`trash empty` is permanent.** It deletes the entry directories and runs `VACUUM` on the SQLite databases those entries touched, so the disk space returns to the OS. It cannot be undone.
+- **Trash expires after 30 days by default.** At startup, SessionZero permanently deletes trash entries older than the retention period. The default is 30 days. A CLI run prints one line to stderr when it deletes anything. The Trash screen shows the retention and the days left for each entry. To change it, run `sz config trash-retention 7` (or `7d`). To keep trash forever, run `sz config trash-retention never`. To skip the check in a session, set `SZ_NO_AUTO_PURGE=1`. Restore still works on any entry until it is deleted.
 
 ## Uninstall
 
@@ -171,7 +174,7 @@ The agents' own session files are not touched by uninstalling.
 
 ## Data directory
 
-SessionZero stores its trash and scan cache in `~/.sessionzero/`. To use another location, set `SZ_DATA_DIR`:
+SessionZero stores its trash, scan cache and settings (`config.json`, which holds the trash retention) in `~/.sessionzero/`. To use another location, set `SZ_DATA_DIR`:
 
 ```sh
 SZ_DATA_DIR=/path/to/sz-data sz trash list

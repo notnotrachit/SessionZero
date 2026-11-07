@@ -105,8 +105,42 @@ impl Trash {
     pub fn list(&self) -> anyhow::Result<Vec<TrashEntry>>; // newest first
     pub fn restore(&self, id: &str) -> anyhow::Result<()>;
     pub fn empty(&self, id: Option<&str>) -> anyhow::Result<u64>; // bytes freed; then VACUUM each touched db (ignore lock errors)
+    pub fn purge_expired(&self, retention: chrono::Duration, now: DateTime<Utc>) -> anyhow::Result<PurgeReport>; // deletes entries with created < now - retention; same removal + VACUUM as empty
 }
+
+pub struct PurgeReport { pub entries: usize, pub bytes: u64 } // bytes = on-disk size of the removed entry dirs
 ```
+
+### purge_expired()
+Reads each entry's manifest and removes those created before `now - retention`, through the same path `empty` uses. An entry whose manifest cannot be read is kept, because its age is unknown. Used by automatic deletion and by `sz trash empty --older`.
+
+## config.rs (user settings and auto-delete policy)
+Stored as JSON at `paths::data_dir()/config.json`. A missing file yields the defaults. Writes go through the same atomic write as the trash manifests.
+```rust
+pub const DEFAULT_TRASH_RETENTION_DAYS: u32 = 30;
+pub const NO_AUTO_PURGE_ENV: &str = "SZ_NO_AUTO_PURGE"; // non-empty value disables automatic deletion
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[serde(default)]
+pub struct Config { pub trash_retention_days: u32 } // 0 = keep forever; default 30
+
+impl Config {
+    pub fn path() -> PathBuf;                       // <data_dir>/config.json
+    pub fn load() -> anyhow::Result<Config>;        // missing file = default; corrupt file = Err
+    pub fn load_from(path: &Path) -> anyhow::Result<Config>;
+    pub fn save(&self) -> anyhow::Result<()>;       // atomic write
+    pub fn save_to(&self, path: &Path) -> anyhow::Result<()>;
+    pub fn retention(&self) -> Option<chrono::Duration>; // None when 0
+    pub fn days_until_purge(&self, created: DateTime<Utc>, now: DateTime<Utc>) -> Option<i64>; // whole days, rounded up, floored at 0; None = kept forever
+    pub fn auto_delete_text(&self, created, now) -> String;       // "auto-deletes in N days" | "auto-deletes today" | "kept forever"
+    pub fn short_auto_delete_text(&self, created, now) -> String; // "in N days" | "today" | "kept forever"
+    pub fn retention_text(&self) -> String;                       // "30 days" | "1 day" | "never"
+}
+pub fn parse_retention(input: &str) -> anyhow::Result<u32>; // "7", "7d", "never" (= 0); anything else is an error
+pub fn auto_purge_disabled() -> bool;                       // SZ_NO_AUTO_PURGE set and non-empty
+pub fn auto_purge(trash: &Trash, config: &Config, now: DateTime<Utc>) -> anyhow::Result<PurgeReport>; // empty report when retention is 0
+```
+Callers decide when to run it. `sz` runs it at startup for every command except `config`, `trash list` and `trash restore`. The TUI runs it on a worker thread. The CLI runs it before the command and prints one line to stderr when it removed something. A config read error skips the pass.
 
 ### plan()
 Unless `force`, block a session when its id is in its adapter's `live_session_ids()` (reason `session is open in <agent>`). Otherwise block it when its agent is running (adapter `process_names` + `util::running_processes`) AND any of:

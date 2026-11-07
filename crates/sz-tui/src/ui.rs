@@ -9,6 +9,7 @@ use ratatui::widgets::{
     Block, BorderType, Cell, Clear, Paragraph, Row as TRow, Table, TableState, Wrap,
 };
 use ratatui::Frame;
+use sz_core::config::Config;
 use sz_core::group;
 use sz_core::model::{AgentKind, Artifact};
 use sz_core::util::truncate;
@@ -600,7 +601,15 @@ fn render_preview(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_trash(f: &mut Frame, area: Rect, app: &App) {
-    let block = bordered(" trash · r restore · x empty entry · X empty all ");
+    let config = Config {
+        trash_retention_days: app.trash_retention_days,
+    };
+    let keep = match config.retention() {
+        Some(_) => format!("auto-delete after {}", config.retention_text()),
+        None => "kept forever".to_string(),
+    };
+    let title = format!(" trash · {keep} · r restore · x empty entry · X empty all ");
+    let block = bordered(title);
     if app.trash_entries.is_empty() {
         f.render_widget(
             Paragraph::new("Trash is empty.").style(dim()).block(block),
@@ -613,8 +622,10 @@ fn render_trash(f: &mut Frame, area: Rect, app: &App) {
         Constraint::Length(17),
         Constraint::Length(10),
         Constraint::Length(10),
+        Constraint::Length(16),
     ];
-    let header = TRow::new(vec!["id", "moved", "sessions", "size"]).style(bold());
+    let header = TRow::new(vec!["id", "moved", "sessions", "size", "auto-delete"]).style(bold());
+    let now = Utc::now();
     let body: Vec<TRow> = app
         .trash_entries
         .iter()
@@ -624,6 +635,7 @@ fn render_trash(f: &mut Frame, area: Rect, app: &App) {
                 Cell::from(e.created.format("%Y-%m-%d %H:%M").to_string()),
                 Cell::from(Line::from(e.sessions.len().to_string()).alignment(Alignment::Right)),
                 Cell::from(Line::from(human(e.bytes)).alignment(Alignment::Right)),
+                Cell::from(config.short_auto_delete_text(e.created, now)),
             ])
         })
         .collect();
@@ -964,5 +976,46 @@ mod render_tests {
         for word in ["Select", "Delete", "Filter", "Sort"] {
             assert!(text.contains(word), "missing {word}");
         }
+    }
+}
+
+#[cfg(test)]
+mod trash_retention_tests {
+    use super::*;
+    use crate::app::{Mode, Options};
+    use chrono::{Duration, Utc};
+    use sz_core::trash::TrashEntry;
+
+    #[test]
+    fn trash_screen_shows_retention_and_days_left_per_entry() {
+        let root = tempfile::tempdir().expect("tempdir");
+        let mut app = App::new(
+            Options {
+                home: root.path().to_path_buf(),
+                force: false,
+                agents: None,
+            },
+            root.path().join("trash"),
+            Mode::Trash,
+            Vec::new(),
+            false,
+        );
+        app.trash_retention_days = 30;
+        app.trash_entries.push(TrashEntry {
+            id: "20260101-000000-abcd".into(),
+            created: Utc::now() - Duration::days(5),
+            bytes: 10,
+            sessions: Vec::new(),
+            ops: Vec::new(),
+            errors: Vec::new(),
+        });
+        let text = crate::app::render_to_string(&app, 120, 20).expect("render");
+        assert!(text.contains("auto-delete after 30 days"), "{text}");
+        assert!(text.contains("in 25 days"), "{text}");
+
+        app.trash_retention_days = 0;
+        let text = crate::app::render_to_string(&app, 120, 20).expect("render");
+        assert!(text.contains("trash · kept forever"), "{text}");
+        assert!(text.contains("kept forever"), "{text}");
     }
 }

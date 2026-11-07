@@ -68,14 +68,60 @@ impl Sandbox {
         }
     }
 
+    /// Runs `sz` with automatic trash deletion disabled, so tests never depend on its timing.
     fn run(&self, args: &[&str]) -> Output {
-        Command::new(env!("CARGO_BIN_EXE_sz"))
-            .arg("--home")
+        self.run_inner(args, true)
+    }
+
+    /// Runs `sz` with automatic trash deletion enabled, as a real user would.
+    fn run_with_purge(&self, args: &[&str]) -> Output {
+        self.run_inner(args, false)
+    }
+
+    fn run_inner(&self, args: &[&str], disable_purge: bool) -> Output {
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_sz"));
+        cmd.arg("--home")
             .arg(&self.home)
             .args(args)
-            .env("SZ_DATA_DIR", &self.data)
-            .output()
-            .expect("run sz")
+            .env("SZ_DATA_DIR", &self.data);
+        if disable_purge {
+            cmd.env("SZ_NO_AUTO_PURGE", "1");
+        } else {
+            cmd.env_remove("SZ_NO_AUTO_PURGE");
+        }
+        cmd.output().expect("run sz")
+    }
+
+    /// Writes a trash entry directly, with its manifest backdated `days_ago` days. The shape
+    /// matches what `Trash::execute` writes, minus any session or op.
+    fn add_trash_entry(&self, id: &str, days_ago: i64) {
+        let dir = self.data.join("trash").join(id);
+        fs::create_dir_all(&dir).expect("entry dir");
+        fs::write(dir.join("payload.bin"), vec![1u8; 2048]).expect("payload");
+        let created = chrono::Utc::now() - chrono::Duration::days(days_ago);
+        let manifest = serde_json::json!({
+            "id": id,
+            "created": created.to_rfc3339(),
+            "bytes": 2048,
+            "sessions": [],
+            "ops": [],
+        });
+        fs::write(
+            dir.join("manifest.json"),
+            serde_json::to_vec(&manifest).expect("manifest json"),
+        )
+        .expect("manifest");
+    }
+
+    fn trash_ids(&self) -> Vec<String> {
+        let mut ids: Vec<String> = match fs::read_dir(self.data.join("trash")) {
+            Ok(rd) => rd
+                .map(|e| e.expect("entry").file_name().to_string_lossy().into_owned())
+                .collect(),
+            Err(_) => Vec::new(),
+        };
+        ids.sort();
+        ids
     }
 
     /// Bytes of a file in the pristine fixture, addressed by its path under the fixture home.
@@ -294,4 +340,120 @@ fn unknown_agent_is_an_error() {
     let sb = Sandbox::new();
     let out = sb.run(&["list", "--agent", "nope"]);
     assert_eq!(code(&out), 1);
+}
+
+const OLD_ID: &str = "20200101-000000-aaaa";
+const YOUNG_ID: &str = "20260101-000000-bbbb";
+
+#[test]
+fn config_defaults_to_thirty_days_and_sets_retention() {
+    let sb = Sandbox::new();
+    let out = sb.run(&["config"]);
+    assert_eq!(code(&out), 0, "stderr: {}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout(&out).contains("trash-retention: 30 days"), "{}", stdout(&out));
+
+    for (arg, expect) in [
+        ("7", "7 days"),
+        ("7d", "7 days"),
+        ("never", "never"),
+    ] {
+        let out = sb.run(&["config", "trash-retention", arg]);
+        assert_eq!(code(&out), 0, "stderr: {}", String::from_utf8_lossy(&out.stderr));
+        let shown = stdout(&sb.run(&["config"]));
+        assert!(
+            shown.contains(&format!("trash-retention: {expect}")),
+            "after '{arg}': {shown}"
+        );
+    }
+    assert!(sb.data.join("config.json").is_file(), "settings file is written in the data dir");
+
+    let out = sb.run(&["config", "trash-retention", "soon"]);
+    assert_ne!(code(&out), 0);
+    assert!(String::from_utf8_lossy(&out.stderr).contains("invalid retention"));
+
+    let v = json(&sb.run(&["config", "--json"]));
+    assert_eq!(v["trash_retention_days"], 0, "never is stored as 0");
+}
+
+#[test]
+fn trash_list_shows_auto_delete_countdown() {
+    let sb = Sandbox::new();
+    sb.add_trash_entry(OLD_ID, 7);
+    let out = sb.run(&["trash", "list"]);
+    assert_eq!(code(&out), 0);
+    let text = stdout(&out);
+    assert!(text.contains("AUTO-DELETE"), "{text}");
+    assert!(text.contains("auto-deletes in 23 days"), "{text}");
+
+    assert_eq!(code(&sb.run(&["config", "trash-retention", "never"])), 0);
+    let text = stdout(&sb.run(&["trash", "list"]));
+    assert!(text.contains("kept forever"), "{text}");
+}
+
+#[test]
+fn trash_empty_older_removes_only_entries_past_the_age() {
+    let sb = Sandbox::new();
+    sb.add_trash_entry(OLD_ID, 40);
+    sb.add_trash_entry(YOUNG_ID, 3);
+
+    let out = sb.run(&["trash", "empty", "--older", "30d", "--yes"]);
+    assert_eq!(code(&out), 0, "stderr: {}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout(&out).contains("Deleted 1 trash entry"), "{}", stdout(&out));
+    assert_eq!(sb.trash_ids(), vec![YOUNG_ID.to_string()]);
+
+    // An id and --older together is refused.
+    let out = sb.run(&["trash", "empty", YOUNG_ID, "--older", "1d", "--yes"]);
+    assert_ne!(code(&out), 0);
+    assert_eq!(sb.trash_ids(), vec![YOUNG_ID.to_string()]);
+}
+
+#[test]
+fn startup_auto_purge_deletes_expired_entries_and_reports_on_stderr() {
+    let sb = Sandbox::new();
+    sb.add_trash_entry(OLD_ID, 45);
+    sb.add_trash_entry(YOUNG_ID, 2);
+
+    let out = sb.run_with_purge(&["agents"]);
+    assert_eq!(code(&out), 0, "stderr: {}", String::from_utf8_lossy(&out.stderr));
+    let err = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert!(
+        err.contains("Auto-deleted 1 trash entry ("),
+        "stderr: {err}"
+    );
+    assert!(
+        err.contains(
+            "older than 30 days. Change with: sz config trash-retention <days|never>"
+        ),
+        "stderr: {err}"
+    );
+    assert_eq!(sb.trash_ids(), vec![YOUNG_ID.to_string()]);
+}
+
+#[test]
+fn auto_purge_is_silent_when_disabled_or_retention_is_never() {
+    let sb = Sandbox::new();
+    sb.add_trash_entry(OLD_ID, 45);
+
+    // SZ_NO_AUTO_PURGE turns the pass off.
+    let out = sb.run(&["agents"]);
+    assert_eq!(code(&out), 0);
+    assert!(!String::from_utf8_lossy(&out.stderr).contains("Auto-deleted"));
+    assert_eq!(sb.trash_ids(), vec![OLD_ID.to_string()]);
+
+    // Retention `never` keeps the entry even with the pass on.
+    assert_eq!(code(&sb.run(&["config", "trash-retention", "never"])), 0);
+    let out = sb.run_with_purge(&["agents"]);
+    assert_eq!(code(&out), 0);
+    assert!(!String::from_utf8_lossy(&out.stderr).contains("Auto-deleted"));
+    assert_eq!(sb.trash_ids(), vec![OLD_ID.to_string()]);
+}
+
+#[test]
+fn trash_list_and_restore_do_not_auto_purge() {
+    let sb = Sandbox::new();
+    sb.add_trash_entry(OLD_ID, 45);
+    let out = sb.run_with_purge(&["trash", "list"]);
+    assert_eq!(code(&out), 0);
+    assert!(!String::from_utf8_lossy(&out.stderr).contains("Auto-deleted"));
+    assert_eq!(sb.trash_ids(), vec![OLD_ID.to_string()]);
 }

@@ -15,6 +15,7 @@ use serde::Serialize;
 use serde_json::{json, Value};
 use sz_core::adapters::all_adapters;
 use sz_core::cache;
+use sz_core::config::{self, Config};
 use sz_core::group::{self, Group, GroupBy, SortBy};
 use sz_core::model::{AgentKind, Session};
 use sz_core::rules::{self, Rule};
@@ -573,6 +574,7 @@ fn emit_clean(
 /// `sz trash list`.
 pub fn trash_list(ctx: &Ctx) -> Result<ExitCode> {
     let entries = Trash::default_location().list()?;
+    let config = load_config_or_default();
     if ctx.json {
         print_json(&entries)?;
         return Ok(ExitCode::SUCCESS);
@@ -581,6 +583,7 @@ pub fn trash_list(ctx: &Ctx) -> Result<ExitCode> {
         println!("Trash is empty.");
         return Ok(ExitCode::SUCCESS);
     }
+    let now = Utc::now();
     let rows: Vec<Vec<String>> = entries
         .iter()
         .map(|e| {
@@ -589,13 +592,104 @@ pub fn trash_list(ctx: &Ctx) -> Result<ExitCode> {
                 fmt_time(Some(e.created)),
                 plural(e.sessions.len(), "session"),
                 group::human_bytes(e.bytes),
+                config.auto_delete_text(e.created, now),
             ]
         })
         .collect();
     print!(
         "{}",
-        format_table(&["ID", "TRASHED", "SESSIONS", "SIZE"], &rows)
+        format_table(
+            &["ID", "TRASHED", "SESSIONS", "SIZE", "AUTO-DELETE"],
+            &rows
+        )
     );
+    Ok(ExitCode::SUCCESS)
+}
+
+/// Reads the config. A broken file prints a warning and falls back to the defaults, so listing
+/// the trash never fails because of settings.
+fn load_config_or_default() -> Config {
+    Config::load().unwrap_or_else(|e| {
+        eprintln!("sz: warning: using default settings: {e:#}");
+        Config::default()
+    })
+}
+
+/// Startup pass of automatic trash deletion for CLI commands. Prints one line to stderr when
+/// something was removed. Skipped when `SZ_NO_AUTO_PURGE` is set. A config error skips the pass
+/// rather than deleting with settings it could not read.
+pub fn auto_purge_cli() {
+    if config::auto_purge_disabled() {
+        return;
+    }
+    let config = match Config::load() {
+        Ok(config) => config,
+        Err(e) => {
+            eprintln!("sz: warning: automatic trash deletion skipped: {e:#}");
+            return;
+        }
+    };
+    match config::auto_purge(&Trash::default_location(), &config, Utc::now()) {
+        Ok(report) if report.entries > 0 => eprintln!(
+            "Auto-deleted {} ({}) older than {}. Change with: sz config trash-retention <days|never>",
+            entries_text(report.entries),
+            group::human_bytes(report.bytes),
+            plural_days(config.trash_retention_days),
+        ),
+        Ok(_) => {}
+        Err(e) => eprintln!("sz: warning: automatic trash deletion failed: {e:#}"),
+    }
+}
+
+/// `1 trash entry` or `N trash entries`.
+fn entries_text(n: usize) -> String {
+    if n == 1 {
+        "1 trash entry".to_string()
+    } else {
+        format!("{n} trash entries")
+    }
+}
+
+fn plural_days(n: u32) -> String {
+    if n == 1 {
+        "1 day".to_string()
+    } else {
+        format!("{n} days")
+    }
+}
+
+/// `sz config`: prints every setting and where it is stored.
+pub fn config_show(ctx: &Ctx) -> Result<ExitCode> {
+    let config = Config::load()?;
+    if ctx.json {
+        print_json(&json!({
+            "trash_retention_days": config.trash_retention_days,
+        }))?;
+    } else {
+        println!("trash-retention: {}", config.retention_text());
+        println!("  trashed sessions are deleted automatically after this long (0 or never: kept)");
+        println!("  file: {}", Config::path().display());
+    }
+    Ok(ExitCode::SUCCESS)
+}
+
+/// `sz config trash-retention <days|never>`.
+pub fn config_trash_retention(ctx: &Ctx, value: &str) -> Result<ExitCode> {
+    let days = config::parse_retention(value)?;
+    let config = Config {
+        trash_retention_days: days,
+    };
+    config.save()?;
+    if ctx.json {
+        print_json(&json!({ "trash_retention_days": days }))?;
+    } else if days == 0 {
+        println!("Automatic deletion is off. Trashed sessions are kept until you empty the trash.");
+    } else {
+        println!(
+            "Trashed sessions are deleted automatically after {}.",
+            plural_days(days)
+        );
+    }
     Ok(ExitCode::SUCCESS)
 }
 
@@ -620,12 +714,22 @@ pub fn trash_restore(ctx: &Ctx, id: &str) -> Result<ExitCode> {
 }
 
 /// `sz trash empty [<id>] [--yes]`. Permanent, so it asks for the word `yes`.
-pub fn trash_empty(ctx: &Ctx, id: Option<&str>, yes: bool) -> Result<ExitCode> {
+pub fn trash_empty(
+    ctx: &Ctx,
+    id: Option<&str>,
+    older: Option<&str>,
+    yes: bool,
+) -> Result<ExitCode> {
+    let age = older.map(rules::parse_duration).transpose()?;
+    if id.is_some() && age.is_some() {
+        bail!("an entry id and --older cannot be used together");
+    }
     if !yes {
-        let target = id.map_or_else(
-            || "every trash entry".to_string(),
-            |i| format!("trash entry {i}"),
-        );
+        let target = match (id, older) {
+            (Some(i), _) => format!("trash entry {i}"),
+            (None, Some(d)) => format!("every trash entry older than {d}"),
+            (None, None) => "every trash entry".to_string(),
+        };
         eprintln!("This permanently deletes {target}. It cannot be undone.");
         if ctx.json || !io::stdin().is_terminal() {
             return Ok(refuse("confirmation needed; re-run with --yes"));
@@ -635,9 +739,22 @@ pub fn trash_empty(ctx: &Ctx, id: Option<&str>, yes: bool) -> Result<ExitCode> {
             return Ok(ExitCode::SUCCESS);
         }
     }
-    let freed = Trash::default_location().empty(id)?;
+    let trash = Trash::default_location();
+    let (removed, freed) = match age {
+        Some(age) => {
+            let report = trash.purge_expired(age, Utc::now())?;
+            (Some(report.entries), report.bytes)
+        }
+        None => (None, trash.empty(id)?),
+    };
     if ctx.json {
-        print_json(&json!({"freed_bytes": freed}))?;
+        let mut out = json!({ "freed_bytes": freed });
+        if let Some(n) = removed {
+            out["removed_entries"] = json!(n);
+        }
+        print_json(&out)?;
+    } else if let Some(n) = removed {
+        println!("Deleted {}, freed {}.", entries_text(n), group::human_bytes(freed));
     } else {
         println!("Freed {}.", group::human_bytes(freed));
     }

@@ -242,6 +242,13 @@ pub struct TrashEntry {
     pub errors: Vec<String>,
 }
 
+/// What a purge removed: how many entries, and the bytes they took up on disk.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct PurgeReport {
+    pub entries: usize,
+    pub bytes: u64,
+}
+
 /// The trash store: one directory per entry under `root`.
 #[derive(Debug, Clone)]
 pub struct Trash {
@@ -348,7 +355,29 @@ impl Trash {
             Some(id) => vec![self.entry_dir(id)?],
             None => self.entry_dirs()?,
         };
-        let mut freed = 0u64;
+        Ok(self.remove_dirs(dirs)?.bytes)
+    }
+
+    /// Permanently deletes every entry created before `now - retention`. Entries whose manifest
+    /// cannot be read are kept, since their age is unknown. Vacuums touched databases, as `empty`
+    /// does. Used by automatic deletion and by `trash empty --older`.
+    pub fn purge_expired(&self, retention: Duration, now: DateTime<Utc>) -> Result<PurgeReport> {
+        let cutoff = now - retention;
+        let mut expired = Vec::new();
+        for dir in self.entry_dirs()? {
+            if let Ok(entry) = read_manifest(&dir) {
+                if entry.created < cutoff {
+                    expired.push(dir);
+                }
+            }
+        }
+        self.remove_dirs(expired)
+    }
+
+    /// Deletes the given entry directories and vacuums the databases their rows came from.
+    /// Lock errors on a database are ignored, since the rows are already gone.
+    fn remove_dirs(&self, dirs: Vec<PathBuf>) -> Result<PurgeReport> {
+        let mut report = PurgeReport::default();
         let mut dbs: BTreeSet<PathBuf> = BTreeSet::new();
         for dir in dirs {
             if let Ok(entry) = read_manifest(&dir) {
@@ -358,7 +387,8 @@ impl Trash {
                     }
                 }
             }
-            freed += path_size(&dir);
+            report.bytes += path_size(&dir);
+            report.entries += 1;
             fs::remove_dir_all(&dir).with_context(|| format!("removing {}", dir.display()))?;
         }
         for db in dbs {
@@ -368,7 +398,7 @@ impl Trash {
                 }
             }
         }
-        Ok(freed)
+        Ok(report)
     }
 
     fn create_entry(&self) -> Result<(String, PathBuf)> {
@@ -2080,5 +2110,106 @@ mod tests {
         assert!(ensure_safe(Path::new("/")).is_err());
         assert!(ensure_safe(Path::new("rel/x")).is_err());
         assert!(ensure_safe(Path::new("/a")).is_ok());
+    }
+}
+
+#[cfg(test)]
+mod purge_tests {
+    use super::*;
+    use crate::config::{self, Config};
+
+    /// Writes a fake trash entry: a manifest backdated to `created` and a payload of `payload`
+    /// bytes. Returns the on-disk size of the entry directory.
+    fn fake_entry(root: &Path, id: &str, created: DateTime<Utc>, payload: usize) -> u64 {
+        let dir = root.join(id);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("payload.bin"), vec![7u8; payload]).unwrap();
+        let entry = TrashEntry {
+            id: id.to_string(),
+            created,
+            bytes: payload as u64,
+            sessions: Vec::new(),
+            ops: Vec::new(),
+            errors: Vec::new(),
+        };
+        write_manifest(&dir, &entry).unwrap();
+        path_size(&dir)
+    }
+
+    #[test]
+    fn purge_expired_removes_only_old_entries_and_reports_bytes() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("trash");
+        let trash = Trash::new(root.clone());
+        let now = Utc::now();
+        let old_a = fake_entry(&root, "20200101-000000-aaaa", now - Duration::days(45), 1000);
+        let old_b = fake_entry(&root, "20200102-000000-bbbb", now - Duration::days(31), 250);
+        let _young = fake_entry(&root, "20260101-000000-cccc", now - Duration::days(29), 5000);
+        let _fresh = fake_entry(&root, "20260102-000000-dddd", now, 9);
+
+        let report = trash.purge_expired(Duration::days(30), now).unwrap();
+        assert_eq!(report.entries, 2);
+        assert_eq!(report.bytes, old_a + old_b);
+        assert!(!root.join("20200101-000000-aaaa").exists());
+        assert!(!root.join("20200102-000000-bbbb").exists());
+        assert!(root.join("20260101-000000-cccc").exists());
+        assert!(root.join("20260102-000000-dddd").exists());
+        assert_eq!(trash.list().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn purge_with_nothing_expired_is_a_no_op() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("trash");
+        let trash = Trash::new(root.clone());
+        let now = Utc::now();
+        fake_entry(&root, "20260101-000000-aaaa", now - Duration::days(1), 10);
+        assert_eq!(
+            trash.purge_expired(Duration::days(30), now).unwrap(),
+            PurgeReport::default()
+        );
+        assert_eq!(trash.list().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn entries_with_unreadable_manifests_are_kept() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("trash");
+        let broken = root.join("20200101-000000-eeee");
+        fs::create_dir_all(&broken).unwrap();
+        fs::write(broken.join(MANIFEST), b"not json").unwrap();
+        let report = Trash::new(root).purge_expired(Duration::zero(), Utc::now()).unwrap();
+        assert_eq!(report, PurgeReport::default());
+        assert!(broken.exists());
+    }
+
+    #[test]
+    fn retention_zero_never_purges() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("trash");
+        let now = Utc::now();
+        fake_entry(&root, "20200101-000000-aaaa", now - Duration::days(4000), 10);
+        let never = Config {
+            trash_retention_days: 0,
+        };
+        let report = config::auto_purge(&Trash::new(root.clone()), &never, now).unwrap();
+        assert_eq!(report, PurgeReport::default());
+        assert!(root.join("20200101-000000-aaaa").exists());
+    }
+
+    #[test]
+    fn auto_purge_uses_the_configured_days() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("trash");
+        let now = Utc::now();
+        fake_entry(&root, "20260101-000000-aaaa", now - Duration::days(8), 10);
+        fake_entry(&root, "20260102-000000-bbbb", now - Duration::days(3), 10);
+        let week = Config {
+            trash_retention_days: 7,
+        };
+        let report = config::auto_purge(&Trash::new(root.clone()), &week, now).unwrap();
+        assert_eq!(report.entries, 1);
+        assert!(!root.join("20260101-000000-aaaa").exists());
+        assert!(root.join("20260102-000000-bbbb").exists());
     }
 }

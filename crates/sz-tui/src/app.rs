@@ -21,11 +21,12 @@ use ratatui::backend::{CrosstermBackend, TestBackend};
 use ratatui::Terminal;
 use sz_core::adapters::all_adapters;
 use sz_core::cache;
+use sz_core::config::{self, Config};
 use sz_core::group::{self, Group, GroupBy, SortBy};
 use sz_core::model::{AgentKind, PreviewMsg, Session};
 use sz_core::paths;
 use sz_core::scan::{self, AgentInfo, ScanEvent};
-use sz_core::trash::{self, DeletePlan, Trash, TrashEntry};
+use sz_core::trash::{self, DeletePlan, PurgeReport, Trash, TrashEntry};
 
 use crate::ui;
 
@@ -115,6 +116,8 @@ pub enum JobResult {
     Restored { id: String, result: Result<(), String> },
     Emptied(Result<u64, String>),
     Preview { key: String, result: Result<Vec<PreviewMsg>, String> },
+    /// The startup auto-delete pass removed entries. Only sent when it removed something.
+    AutoPurged { report: PurgeReport, days: u32 },
     Info(String),
 }
 
@@ -185,6 +188,8 @@ pub struct App {
     toast: Option<(String, Instant)>,
     pub busy: Option<String>,
     pub trash_entries: Vec<TrashEntry>,
+    /// Days before trash entries are auto-deleted. 0 keeps them forever. Shown on the trash screen.
+    pub trash_retention_days: u32,
     /// Last delete-plan request. Replies carrying an older `seq` are dropped.
     plan_seq: u64,
 
@@ -249,6 +254,7 @@ impl App {
             toast: None,
             busy: None,
             trash_entries: Vec::new(),
+            trash_retention_days: config::DEFAULT_TRASH_RETENTION_DAYS,
             plan_seq: 0,
             pending: Vec::new(),
             scan_rx: None,
@@ -427,8 +433,48 @@ impl App {
                 self.preview_pending.remove(&key);
                 self.previews.insert(key, result);
             }
+            JobResult::AutoPurged { report, days } => {
+                let unit = if days == 1 { "day" } else { "days" };
+                self.set_toast(format!(
+                    "Auto-deleted {} ({}) older than {days} {unit}",
+                    if report.entries == 1 {
+                        "1 trash entry".to_string()
+                    } else {
+                        format!("{} trash entries", report.entries)
+                    },
+                    group::human_bytes(report.bytes)
+                ));
+                self.load_trash();
+            }
             JobResult::Info(msg) => self.set_toast(msg),
         }
+    }
+
+    /// Runs the automatic trash deletion on a worker thread so startup never waits for it. The
+    /// result arrives as a toast, and only when entries were removed.
+    pub fn start_auto_purge(&self, config: Config) {
+        let tx = self.jobs_tx.clone();
+        let root = self.trash_root.clone();
+        thread::spawn(move || {
+            let trash = Trash::new(root);
+            match config::auto_purge(&trash, &config, Utc::now()) {
+                Ok(report) if report.entries > 0 => {
+                    let _ = tx.send(JobResult::AutoPurged {
+                        report,
+                        days: config.trash_retention_days,
+                    });
+                }
+                Ok(_) => {}
+                Err(e) => {
+                    let _ = tx.send(JobResult::Info(format!("Automatic trash deletion failed: {e:#}")));
+                }
+            }
+        });
+    }
+
+    /// Shows a message in the footer toast.
+    pub fn notify(&mut self, msg: impl Into<String>) {
+        self.set_toast(msg);
     }
 
     /// Runs queued commands on worker threads. Call once per frame after input is handled.
@@ -1218,7 +1264,10 @@ fn restore_terminal() {
 ///
 /// Setting `SZ_TUI_SNAPSHOT=<path>` skips the terminal: it scans, renders one 120x40 frame of
 /// `mode` into a text file at `<path>` and returns. Nothing is deleted or cached.
-pub fn run(opts: Options, mode: Mode) -> Result<()> {
+///
+/// `background_purge` runs the automatic trash deletion once the app is up, unless
+/// `SZ_NO_AUTO_PURGE` is set.
+pub fn run(opts: Options, mode: Mode, background_purge: bool) -> Result<()> {
     if let Ok(path) = std::env::var("SZ_TUI_SNAPSHOT") {
         let text = snapshot(opts, mode, 120, 40)?;
         std::fs::write(&path, text)?;
@@ -1235,6 +1284,15 @@ pub fn run(opts: Options, mode: Mode) -> Result<()> {
         has_cache,
     );
     app.persist = true;
+    match Config::load() {
+        Ok(config) => {
+            app.trash_retention_days = config.trash_retention_days;
+            if background_purge && !config::auto_purge_disabled() {
+                app.start_auto_purge(config);
+            }
+        }
+        Err(e) => app.notify(format!("Settings not read, trash auto-delete skipped: {e:#}")),
+    }
     app.start_scan();
 
     let _guard = TerminalGuard::enter()?;
@@ -1785,5 +1843,48 @@ mod tests {
             let text = snapshot(opts, mode, 120, 40).expect("snapshot");
             std::fs::write(PathBuf::from(&scratch).join(name), text).expect("write");
         }
+    }
+}
+
+#[cfg(test)]
+mod auto_purge_tests {
+    use super::*;
+
+    fn blank_app(root: &std::path::Path) -> App {
+        App::new(
+            Options {
+                home: root.to_path_buf(),
+                force: false,
+                agents: None,
+            },
+            root.join("trash"),
+            Mode::Trash,
+            Vec::new(),
+            false,
+        )
+    }
+
+    #[test]
+    fn purge_result_becomes_a_toast_and_is_silent_when_nothing_ran() {
+        let root = tempfile::tempdir().expect("tempdir");
+        let mut app = blank_app(root.path());
+        assert!(app.toast_text().is_none());
+        app.apply_job(JobResult::AutoPurged {
+            report: PurgeReport {
+                entries: 2,
+                bytes: 4096,
+            },
+            days: 30,
+        });
+        let toast = app.toast_text().expect("toast after purge");
+        assert!(toast.starts_with("Auto-deleted 2 trash entries ("), "{toast}");
+        assert!(toast.ends_with("older than 30 days"), "{toast}");
+    }
+
+    #[test]
+    fn retention_defaults_to_thirty_days_until_settings_are_read() {
+        let root = tempfile::tempdir().expect("tempdir");
+        let app = blank_app(root.path());
+        assert_eq!(app.trash_retention_days, 30);
     }
 }
