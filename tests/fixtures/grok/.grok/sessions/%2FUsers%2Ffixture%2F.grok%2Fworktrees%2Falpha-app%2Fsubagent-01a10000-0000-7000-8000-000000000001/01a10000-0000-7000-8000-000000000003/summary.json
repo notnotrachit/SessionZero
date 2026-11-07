@@ -1,0 +1,25 @@
+{
+  "info": {
+    "id": "01a10000-0000-7000-8000-000000000003",
+    "cwd": "/Users/fixture/.grok/worktrees/alpha-app/subagent-01a10000-0000-7000-8000-000000000001"
+  },
+  "agent_id": "fixture-agent",
+  "attempt_id": "fixture-attempt",
+  "session_summary": "",
+  "created_at": "2026-02-01T10:05:00.000000Z",
+  "updated_at": "2026-02-01T10:08:00.000000Z",
+  "last_active_at": "2026-02-01T10:08:00.000000Z",
+  "num_messages": 2,
+  "num_chat_messages": 2,
+  "current_model_id": "example-model",
+  "next_trace_turn": 2,
+  "chat_format_version": 1,
+  "head_branch": "main",
+  "grok_home": "/Users/fixture/.grok",
+  "generated_title": "Explore config readers (resume)",
+  "agent_name": "build",
+  "reasoning_effort": "medium",
+  "session_kind": "subagent_resume",
+  "parent_session_id": "01a10000-0000-7000-8000-000000000001",
+  "worktree_label": "subagent-01a10000-0000-7000-8000-000000000001"
+}

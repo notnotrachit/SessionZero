@@ -5,6 +5,9 @@ members = ["crates/sz-core", "crates/sz-tui"]
 [workspace.package]
 edition = "2021"
 version = "0.1.0"
+license = "MIT"
+repository = "https://github.com/notnotrachit/SessionZero"
+homepage = "https://github.com/notnotrachit/SessionZero"
 
 [workspace.dependencies]
 anyhow = "1"
@@ -23,3 +26,8 @@ crossterm = "0.28"
 regex = "1"
 humansize = "2"
 tempfile = "3"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

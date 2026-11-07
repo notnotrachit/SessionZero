@@ -1,7 +1,14 @@
 [package]
-name = "sz-tui"
+name = "sessionzero"
 version.workspace = true
 edition.workspace = true
+description = "Find, size, group and safely trash the session files left behind by AI coding agents"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords = ["ai", "cleanup", "tui", "codex", "claude"]
+categories = ["command-line-utilities"]
 
 [[bin]]
 name = "sz"
