@@ -10,7 +10,8 @@ use ratatui::widgets::{
 };
 use ratatui::Frame;
 use sz_core::group;
-use sz_core::model::{AgentKind, Artifact};
+use sz_core::model::{AgentKind, Artifact, Session};
+use sz_core::trash::DeletePlan;
 use sz_core::util::truncate;
 
 use crate::app::{App, DeleteModal, MenuItem, Modal, Row, Screen, TrashModal, MENU_ITEMS};
@@ -38,7 +39,7 @@ pub fn render(f: &mut Frame, app: &App) {
     }
     render_footer(f, chunks[2], app);
     if let Some(modal) = &app.modal {
-        render_modal(f, area, modal, app);
+        render_modal(f, area, modal);
     }
 }
 
@@ -679,29 +680,159 @@ fn render_agents(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: false }), inner);
 }
 
-fn centered(area: Rect, pct_w: u16, h: u16) -> Rect {
-    let h = h.min(area.height);
-    let w = (area.width * pct_w / 100).max(30).min(area.width);
-    Rect {
-        x: area.x + (area.width - w) / 2,
-        y: area.y + (area.height - h) / 2,
-        width: w,
-        height: h,
+/// Widest modal, in columns. Narrower terminals get `terminal width - 4`.
+const MODAL_MAX_W: u16 = 110;
+/// Fixed columns of one session row in the delete confirm list.
+const AGENT_COL: usize = 10;
+const SIZE_COL: usize = 9;
+
+/// Shortens `s` to at most `w` characters, ending in `...` when it is cut. Control characters
+/// become spaces so a title can never break a row.
+fn clip(s: &str, w: usize) -> String {
+    let flat: String = s
+        .chars()
+        .map(|c| if c.is_control() { ' ' } else { c })
+        .collect();
+    if flat.chars().count() <= w {
+        return flat;
     }
+    if w <= 3 {
+        return flat.chars().take(w).collect();
+    }
+    let mut out: String = flat.chars().take(w - 3).collect();
+    out.push_str("...");
+    out
 }
 
-fn render_modal(f: &mut Frame, area: Rect, modal: &Modal, app: &App) {
-    let (title, lines, color) = match modal {
-        Modal::Help => (" help ", help_lines(), ACCENT),
-        Modal::Delete(DeleteModal::Checking { count, .. }) => (
-            " delete ",
-            vec![
-                Line::from(format!("Checking {count} selected sessions for running agents…")),
-                Line::from(""),
-                Line::from(Span::styled("Esc cancels", dim())),
-            ],
-            Color::Red,
-        ),
+/// One line per session: agent | size | title · project. Project is dropped when the row is
+/// too narrow for it, and every column is clipped rather than wrapped.
+fn session_line(s: &Session, w: usize) -> Line<'static> {
+    let agent = clip(s.agent.label(), AGENT_COL);
+    let size = format!("{:>width$}", clip(&human(s.bytes), SIZE_COL), width = SIZE_COL);
+    let title = s.title.clone().unwrap_or_else(|| s.id.clone());
+    let project = s
+        .project
+        .as_ref()
+        .map(|p| group::display_path(p))
+        .unwrap_or_else(|| "(no project)".to_string());
+    let fixed = 2 + AGENT_COL + 1 + SIZE_COL + 2;
+    let rest = w.saturating_sub(fixed);
+    let text = if rest >= 48 {
+        let title_w = rest * 11 / 20;
+        let project_w = rest - title_w - 3;
+        format!("{} · {}", clip(&title, title_w), clip(&project, project_w))
+    } else {
+        clip(&title, rest)
+    };
+    Line::from(vec![
+        Span::raw("  "),
+        Span::styled(format!("{:<width$}", agent, width = AGENT_COL), agent_style(s.agent)),
+        Span::raw(" "),
+        Span::raw(size),
+        Span::raw("  "),
+        Span::raw(text),
+    ])
+}
+
+/// The delete confirm list, cut to `avail` lines. Sessions come first. Blocked sessions get
+/// what is left, and at least three lines (blank, heading, one row) when there are any.
+fn confirm_body(plan: &DeletePlan, w: usize, avail: usize) -> Vec<Line<'static>> {
+    let n = plan.sessions.len();
+    let b = plan.blocked.len();
+    let blocked_min = if b == 0 { 0 } else { 3.min(avail) };
+    let sess_room = avail - blocked_min;
+    let sess_shown = if n <= sess_room { n } else { sess_room.saturating_sub(1) };
+
+    let mut out: Vec<Line<'static>> = plan.sessions[..sess_shown]
+        .iter()
+        .map(|s| session_line(s, w))
+        .collect();
+    if sess_shown < n {
+        let hidden = &plan.sessions[sess_shown..];
+        let bytes: u64 = hidden.iter().map(|s| s.bytes).sum();
+        out.push(Line::from(format!(
+            "  ... and {} more ({})",
+            hidden.len(),
+            human(bytes)
+        )));
+    }
+
+    if b > 0 {
+        let room = avail.saturating_sub(out.len());
+        if room >= 3 {
+            out.push(Line::from(""));
+            out.push(Line::from(Span::styled(
+                clip(&format!("Blocked, left in place ({b}):"), w),
+                Style::default().fg(Color::Yellow),
+            )));
+            let rows = room - 2;
+            let shown = if b <= rows { b } else { rows - 1 };
+            for x in &plan.blocked[..shown] {
+                out.push(Line::from(clip(&format!("  {}: {}", x.key, x.reason), w)));
+            }
+            if shown < b {
+                out.push(Line::from(format!("  ... and {} more blocked", b - shown)));
+            }
+        } else if room > 0 {
+            out.push(Line::from(clip(&format!("Blocked, left in place: {b}"), w)));
+        }
+    }
+    out
+}
+
+/// Lines a block of text takes at width `w`. With `wrap` off each line takes exactly one row.
+fn rows_for(lines: &[Line], w: usize, wrap: bool) -> usize {
+    lines
+        .iter()
+        .map(|l| if wrap { l.width().div_ceil(w.max(1)).max(1) } else { 1 })
+        .sum()
+}
+
+/// What one modal shows: a header, a body that is cut to the space left, and a key-hint row
+/// that always renders at the bottom.
+struct Panel<'a> {
+    title: &'static str,
+    color: Color,
+    header: Vec<Line<'static>>,
+    /// Called with the inner width and the number of body lines that fit.
+    body: Box<dyn Fn(usize, usize) -> Vec<Line<'static>> + 'a>,
+    /// Message text wraps. List rows never do.
+    wrap_body: bool,
+    hint: Line<'static>,
+}
+
+/// `lead  ·  y confirm · n/Esc cancel`. Pass `None` when the modal has no confirm key.
+fn key_hint(lead: &str, confirm: Option<&str>) -> Line<'static> {
+    let mut spans = vec![Span::styled(lead.to_string(), bold()), Span::raw("  ·  ")];
+    if let Some(action) = confirm {
+        spans.push(Span::styled("y", bold()));
+        spans.push(Span::raw(format!(" {action} · ")));
+    }
+    spans.push(Span::styled("n/Esc", bold()));
+    spans.push(Span::raw(" cancel"));
+    Line::from(spans)
+}
+
+fn modal_panel(modal: &Modal) -> Panel<'_> {
+    match modal {
+        Modal::Help => Panel {
+            title: " help ",
+            color: ACCENT,
+            header: Vec::new(),
+            body: Box::new(|_, _| help_lines()),
+            wrap_body: true,
+            hint: Line::from(Span::styled("Esc closes this help", dim())),
+        },
+        Modal::Delete(DeleteModal::Checking { count, .. }) => Panel {
+            title: " delete ",
+            color: Color::Red,
+            header: vec![Line::from(format!(
+                "Checking {count} selected sessions for running agents…"
+            ))],
+            body: Box::new(|_, _| Vec::new()),
+            wrap_body: true,
+            hint: key_hint("checking...", None),
+        },
         Modal::Delete(DeleteModal::Confirm { plan, children }) => {
             let mut head = format!(
                 "Move {} sessions ({}) to trash?",
@@ -711,95 +842,127 @@ fn render_modal(f: &mut Frame, area: Rect, modal: &Modal, app: &App) {
             if *children > 0 {
                 head.push_str(&format!(" +{children} child sessions"));
             }
-            let mut lines = vec![Line::from(head)];
-            lines.push(Line::from(""));
-            for s in plan.sessions.iter().take(8) {
-                lines.push(Line::from(format!(
-                    "  {:<10} {} · {}",
-                    s.agent.label(),
-                    s.title.clone().unwrap_or_else(|| s.id.clone()),
-                    s.project
-                        .as_ref()
-                        .map(|p| group::display_path(p))
-                        .unwrap_or_else(|| "(no project)".to_string())
-                )));
+            Panel {
+                title: " delete ",
+                color: Color::Red,
+                header: vec![Line::from(head)],
+                body: Box::new(move |w, avail| confirm_body(plan, w, avail)),
+                wrap_body: false,
+                hint: key_hint("Move to trash? (y/N)", Some("confirm")),
             }
-            if plan.sessions.len() > 8 {
-                lines.push(Line::from(format!(
-                    "  … and {} more",
-                    plan.sessions.len() - 8
-                )));
-            }
-            if !plan.blocked.is_empty() {
-                lines.push(Line::from(""));
-                lines.push(Line::from(Span::styled(
-                    format!("Blocked, left in place ({}):", plan.blocked.len()),
-                    Style::default().fg(Color::Yellow),
-                )));
-                for b in plan.blocked.iter().take(5) {
-                    lines.push(Line::from(format!("  {}: {}", b.key, b.reason)));
-                }
-            }
-            lines.push(Line::from(""));
-            lines.push(Line::from(Span::styled(
-                "Move to trash? (y/N)",
-                bold(),
-            )));
-            (" delete ", lines, Color::Red)
         }
-        Modal::Delete(DeleteModal::Running { count }) => (
-            " delete ",
-            vec![Line::from(format!("Moving {count} sessions to trash…"))],
-            Color::Red,
-        ),
-        Modal::Trash(TrashModal::Restore(id)) => (
-            " restore ",
-            vec![
-                Line::from(format!("Restore trash entry {id} back to its original paths?")),
-                Line::from(""),
-                Line::from(Span::styled("Restore? (y/N)", bold())),
-            ],
-            ACCENT,
-        ),
-        Modal::Trash(TrashModal::EmptyOne(id)) => (
-            " permanent delete ",
-            vec![
-                Line::from(Span::styled(
-                    format!("Permanently delete trash entry {id}. This cannot be undone."),
-                    Style::default().fg(Color::Red),
-                )),
-                Line::from(""),
-                Line::from(Span::styled("Delete permanently? (y/N)", bold())),
-            ],
-            Color::Red,
-        ),
-        Modal::Trash(TrashModal::EmptyAll(typed)) => (
-            " permanent delete ",
-            vec![
-                Line::from(Span::styled(
-                    "Permanently empty the WHOLE trash. This cannot be undone.",
-                    Style::default().fg(Color::Red),
-                )),
-                Line::from(""),
-                Line::from(format!("Type yes and press Enter: {typed}▏")),
-                Line::from(Span::styled("Esc cancels", dim())),
-            ],
-            Color::Red,
-        ),
+        Modal::Delete(DeleteModal::Running { count }) => Panel {
+            title: " delete ",
+            color: Color::Red,
+            header: vec![Line::from(format!("Moving {count} sessions to trash…"))],
+            body: Box::new(|_, _| Vec::new()),
+            wrap_body: true,
+            hint: Line::from(Span::styled("working...", dim())),
+        },
+        Modal::Trash(TrashModal::Restore(id)) => Panel {
+            title: " restore ",
+            color: ACCENT,
+            header: vec![Line::from(format!(
+                "Restore trash entry {id} back to its original paths?"
+            ))],
+            body: Box::new(|_, _| Vec::new()),
+            wrap_body: true,
+            hint: key_hint("Restore? (y/N)", Some("confirm")),
+        },
+        Modal::Trash(TrashModal::EmptyOne(id)) => Panel {
+            title: " permanent delete ",
+            color: Color::Red,
+            header: vec![Line::from(Span::styled(
+                format!("Permanently delete trash entry {id}. This cannot be undone."),
+                Style::default().fg(Color::Red),
+            ))],
+            body: Box::new(|_, _| Vec::new()),
+            wrap_body: true,
+            hint: key_hint("Delete permanently? (y/N)", Some("confirm")),
+        },
+        Modal::Trash(TrashModal::EmptyAll(typed)) => Panel {
+            title: " permanent delete ",
+            color: Color::Red,
+            header: vec![Line::from(Span::styled(
+                "Permanently empty the WHOLE trash. This cannot be undone.",
+                Style::default().fg(Color::Red),
+            ))],
+            body: Box::new(move |_, _| {
+                vec![Line::from(format!("Type yes and press Enter: {typed}▏"))]
+            }),
+            wrap_body: true,
+            hint: Line::from(vec![
+                Span::styled("Enter", bold()),
+                Span::raw(" confirm once you type yes  ·  "),
+                Span::styled("Esc", bold()),
+                Span::raw(" cancel"),
+            ]),
+        },
+    }
+}
+
+/// Draws a modal centred over `area`, sized to its content and clipped to the terminal. The
+/// key-hint row is a separate, fixed row at the bottom of the box.
+fn render_modal(f: &mut Frame, area: Rect, modal: &Modal) {
+    let panel = modal_panel(modal);
+    let width = area
+        .width
+        .saturating_sub(4)
+        .min(MODAL_MAX_W)
+        .max(area.width.min(10));
+    let inner_w = width.saturating_sub(2).max(1) as usize;
+
+    let header_h = rows_for(&panel.header, inner_w, true);
+    let hint_h = 1;
+    let body_all = (panel.body)(inner_w, usize::MAX);
+    let body_h = rows_for(&body_all, inner_w, panel.wrap_body);
+
+    let wanted = header_h + body_h + hint_h + 2;
+    let min_h = header_h + 1 + hint_h + 2;
+    let height = (wanted as u16)
+        .min(area.height.saturating_sub(2))
+        .max(min_h as u16)
+        .min(area.height);
+    let rect = Rect {
+        x: area.x + (area.width - width) / 2,
+        y: area.y + (area.height - height) / 2,
+        width,
+        height,
     };
-    let height = (lines.len() as u16).saturating_add(2);
-    let rect = centered(area, 70, height);
+
+    let body_avail = (height as usize)
+        .saturating_sub(2 + header_h + hint_h)
+        .max(1);
+    let body = if body_h <= body_avail {
+        body_all
+    } else {
+        (panel.body)(inner_w, body_avail)
+    };
+
     f.render_widget(Clear, rect);
+    let block = bordered(panel.title).border_style(Style::default().fg(panel.color));
+    let inner = block.inner(rect);
+    f.render_widget(block, rect);
+
+    let rows = Layout::vertical([
+        Constraint::Length(header_h as u16),
+        Constraint::Min(0),
+        Constraint::Length(hint_h as u16),
+    ])
+    .split(inner);
+
     f.render_widget(
-        Paragraph::new(lines)
-            .block(
-                bordered(title)
-                    .border_style(Style::default().fg(color)),
-            )
-            .wrap(Wrap { trim: false }),
-        rect,
+        Paragraph::new(panel.header).wrap(Wrap { trim: false }),
+        rows[0],
     );
-    let _ = app;
+    let body_p = Paragraph::new(body);
+    let body_p = if panel.wrap_body {
+        body_p.wrap(Wrap { trim: false })
+    } else {
+        body_p
+    };
+    f.render_widget(body_p, rows[1]);
+    f.render_widget(Paragraph::new(panel.hint), rows[2]);
 }
 
 fn help_lines() -> Vec<Line<'static>> {
@@ -964,5 +1127,87 @@ mod render_tests {
         for word in ["Select", "Delete", "Filter", "Sort"] {
             assert!(text.contains(word), "missing {word}");
         }
+    }
+
+    const MB: u64 = 1 << 20;
+
+    /// `n` sessions with titles far wider than any modal, plus one blocked session.
+    fn long_plan(n: usize) -> sz_core::trash::DeletePlan {
+        use sz_core::model::AgentKind;
+        use sz_core::trash::{Blocked, DeletePlan};
+
+        let title = "investigate the flaky retry logic in the sync worker and cache layer ".repeat(3);
+        let sessions = (0..n)
+            .map(|i| {
+                crate::app::fixtures::sess(
+                    AgentKind::Claude,
+                    &format!("s{i}"),
+                    Some(&format!("{i} {title}")),
+                    Some("/Users/rachit/workplace/some/deep/project/path"),
+                    150 * MB,
+                    1,
+                )
+            })
+            .collect::<Vec<_>>();
+        DeletePlan {
+            bytes: 150 * MB * n as u64,
+            sessions,
+            blocked: vec![Blocked {
+                key: "codex:b1".into(),
+                reason: "agent is still running this session".into(),
+            }],
+        }
+    }
+
+    fn render_confirm(n: usize, w: u16, h: u16) -> String {
+        use crate::app::{DeleteModal, Modal};
+
+        let root = tempfile::tempdir().unwrap();
+        let mut a = app(Mode::List, sample(), root.path());
+        a.modal = Some(Modal::Delete(DeleteModal::Confirm {
+            plan: long_plan(n),
+            children: 0,
+        }));
+        render_to_string(&a, w, h).unwrap()
+    }
+
+    #[test]
+    fn delete_confirm_hints_stay_visible_and_rows_never_wrap() {
+        for (w, h) in [(80u16, 24u16), (120, 30), (200, 50)] {
+            for n in [1usize, 6, 40] {
+                let text = render_confirm(n, w, h);
+                for needle in ["confirm", "cancel", "Move to trash? (y/N)"] {
+                    assert!(text.contains(needle), "{w}x{h} n={n}: missing {needle}\n{text}");
+                }
+                let rows: Vec<&str> = text
+                    .lines()
+                    .filter(|l| l.contains("investigate"))
+                    .collect();
+                let hidden = text
+                    .lines()
+                    .find(|l| l.contains(" more ("))
+                    .map(|l| {
+                        l.split("... and ").nth(1).unwrap().split(' ').next().unwrap()
+                    })
+                    .map(|n| n.parse::<usize>().unwrap())
+                    .unwrap_or(0);
+                assert_eq!(rows.len() + hidden, n, "{w}x{h} n={n}\n{text}");
+                for row in rows {
+                    assert!(row.contains(" · "), "{w}x{h} n={n}: row lost its project: {row}");
+                    assert!(row.contains("..."), "{w}x{h} n={n}: long title not cut: {row}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn trash_empty_all_modal_shows_confirm_and_cancel() {
+        use crate::app::{Modal, TrashModal};
+
+        let root = tempfile::tempdir().unwrap();
+        let mut a = app(Mode::Trash, sample(), root.path());
+        a.modal = Some(Modal::Trash(TrashModal::EmptyAll("ye".into())));
+        let text = render_to_string(&a, 80, 24).unwrap();
+        assert!(text.contains("confirm") && text.contains("cancel"), "{text}");
     }
 }
