@@ -1,0 +1,11 @@
+{"type":"session.start","data":{"sessionId":"7c1d2e01-aaaa-4b1c-9d00-000000000001","version":1,"producer":"copilot-agent","copilotVersion":"0.0.0-fixture","startTime":"2026-11-04T14:00:00.000Z","context":{"cwd":"/Users/test/proj/alpha","gitRoot":"/Users/test/proj/alpha","branch":"main","repository":"test/alpha"}},"id":"ev-001","timestamp":"2026-11-04T14:00:00.100Z","parentId":null}
+{"type":"user.message","data":{"content":"The sync worker retries forever when the server returns 503. Add a cap.","attachments":[],"agentMode":"interactive"},"id":"ev-002","timestamp":"2026-11-04T14:00:05.000Z","parentId":"ev-001"}
+{"type":"assistant.turn_start","data":{"turnId":"0"},"id":"ev-003","timestamp":"2026-11-04T14:00:06.000Z","parentId":"ev-002"}
+{"type":"assistant.message","data":{"messageId":"msg-001","content":"","toolRequests":[{"toolCallId":"call-001","name":"view"}]},"id":"ev-004","timestamp":"2026-11-04T14:00:07.000Z","parentId":"ev-003"}
+{"type":"tool.execution_start","data":{"toolCallId":"call-001","toolName":"view","arguments":{"path":"src/sync.rs"}},"id":"ev-005","timestamp":"2026-11-04T14:00:07.500Z","parentId":"ev-004"}
+{"type":"tool.execution_complete","data":{"toolCallId":"call-001","success":true,"result":"fn sync_loop() {}"},"id":"ev-006","timestamp":"2026-11-04T14:00:08.000Z","parentId":"ev-005"}
+{"type":"assistant.message","data":{"messageId":"msg-002","content":"I added a retry cap of five attempts in src/sync.rs.","toolRequests":[]},"id":"ev-007","timestamp":"2026-11-04T14:01:00.000Z","parentId":"ev-006"}
+{"type":"assistant.message","data":{"messageId":"msg-sub","content":"Subagent scratch note that is not a main message.","parentToolCallId":"call-009"},"id":"ev-008","timestamp":"2026-11-04T14:01:10.000Z","parentId":"ev-007"}
+{"type":"user.message","data":{"content":"trunc
+{"type":"user.message","data":{"content":"Thanks. Run the tests too."},"id":"ev-010","timestamp":"2026-11-04T14:10:00.000Z","parentId":"ev-007"}
+{"type":"assistant.message","data":{"messageId":"msg-003","content":"All 42 tests pass.","toolRequests":[]},"id":"ev-011","timestamp":"2026-11-04T14:20:30.000Z","parentId":"ev-010"}

@@ -1,0 +1,50 @@
+{
+  "_about": "Expected parse results for the synthetic GitHub Copilot CLI fixture home at tests/fixtures/copilot. Paths in artifacts are relative to this fixture home. The cache file and the log file are shared with other sessions or not owned by one session; see docs/formats/copilot.md. The orphan cache key 7c1d2e04-... has no session directory and must not appear as a session.",
+  "sessions": [
+    {
+      "id": "7c1d2e01-aaaa-4b1c-9d00-000000000001",
+      "title": "Fix the retry loop in the sync worker",
+      "title_source": "workspace.yaml summary",
+      "project": "/Users/test/proj/alpha",
+      "created": "2026-11-04T14:00:00.000Z",
+      "last_active": "2026-11-04T14:20:30.000Z",
+      "message_count": 4,
+      "parent_id": null,
+      "artifacts": [
+        ".copilot/session-state/7c1d2e01-aaaa-4b1c-9d00-000000000001",
+        ".copilot/vscode.session.metadata.cache.json",
+        ".copilot/logs/7c1d2e01-aaaa-4b1c-9d00-000000000001.log"
+      ]
+    },
+    {
+      "id": "7c1d2e02-bbbb-4b1c-9d00-000000000002",
+      "title": "Explain the build script",
+      "title_source": "first user.message (no summary, no cwd)",
+      "project": null,
+      "created": "2026-11-05T09:00:00.000Z",
+      "last_active": "2026-11-05T09:01:30.000Z",
+      "message_count": 2,
+      "parent_id": null,
+      "artifacts": [
+        ".copilot/session-state/7c1d2e02-bbbb-4b1c-9d00-000000000002",
+        ".copilot/vscode.session.metadata.cache.json",
+        ".copilot/logs/7c1d2e02-bbbb-4b1c-9d00-000000000002.log"
+      ]
+    },
+    {
+      "id": "7c1d2e03-cccc-4b1c-9d00-000000000003",
+      "title": "Summarize the changelog since 1.2",
+      "title_source": "vscode.session.metadata.cache firstUserMessage",
+      "project": null,
+      "created": "2026-11-06T10:00:00.000Z",
+      "last_active": "2026-11-06T10:03:00.000Z",
+      "message_count": 2,
+      "parent_id": null,
+      "artifacts": [
+        ".copilot/session-state/7c1d2e03-cccc-4b1c-9d00-000000000003",
+        ".copilot/history-session-state/session_7c1d2e03-cccc-4b1c-9d00-000000000003_1793000000000.json",
+        ".copilot/vscode.session.metadata.cache.json"
+      ]
+    }
+  ]
+}

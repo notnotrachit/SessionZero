@@ -1,0 +1,10 @@
+{"kind":0,"v":{"version":3,"sessionId":"22222222-bbbb-4ccc-8ddd-000000000002","creationDate":1770040800000,"initialLocation":"panel","requests":[]}}
+{"kind":2,"k":["requests"],"v":[{"requestId":"req-b1","timestamp":1770040801000,"message":{"text":"Which flags does the sz CLI take?","parts":[]},"response":[]}]}
+{"kind":1,"k":["requests",0,"response"],"v":[{"value":"Draft answer, to be replaced."}]}
+{"kind":2,"k":["requests",0,"response"],"i":0,"v":[{"value":"The CLI takes --json and --dry-run."}]}
+{"kind":1,"k":["responderUsername"],"v":"tmp"}
+{"kind":3,"k":["responderUsername"]}
+{"kind":1,"k":["customTitle"],"v":"Beta: CLI flags"}
+{"kind":2,"k":["requests"],"v":[{"requestId":"req-b2","timestamp":1770041100000,"message":{"text":"Add a --quiet switch too.","parts":[]},"response":[]}]}
+{"kind":1,"k":["requests",1,"responseTimestamp"],"v":1770041109000}
+{"kind":2,"k":["requests",1,"response"],"v":[{"value":"Done, --quiet added."}]}

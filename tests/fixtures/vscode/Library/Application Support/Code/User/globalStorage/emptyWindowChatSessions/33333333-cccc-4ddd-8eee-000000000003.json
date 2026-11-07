@@ -1,0 +1,22 @@
+{
+  "version": 3,
+  "sessionId": "33333333-cccc-4ddd-8eee-000000000003",
+  "creationDate": 1770278400000,
+  "initialLocation": "panel",
+  "requests": [
+    {
+      "requestId": "req-c1",
+      "timestamp": 1770278402000,
+      "message": {
+        "text": "What does this regex do?\n^\\d{3}-\\d{4}$",
+        "parts": []
+      },
+      "response": [
+        { "value": "It matches a 3-digit, dash, 4-digit string." }
+      ],
+      "responseId": "resp-c1",
+      "responseTimestamp": 1770278404000,
+      "modelId": "fixture-model"
+    }
+  ]
+}

@@ -114,7 +114,7 @@ fn agents_json_lists_every_agent_with_sessions() {
     );
     let v = json(&out);
     let rows = v.as_array().expect("array");
-    assert_eq!(rows.len(), 8);
+    assert_eq!(rows.len(), 11);
     let claude = rows
         .iter()
         .find(|r| r["agent"] == "claude")

@@ -1,0 +1,15 @@
+{
+  "7c1d2e01-aaaa-4b1c-9d00-000000000001": {
+    "writtenToDisc": true
+  },
+  "7c1d2e02-bbbb-4b1c-9d00-000000000002": {
+    "writtenToDisc": true
+  },
+  "7c1d2e03-cccc-4b1c-9d00-000000000003": {
+    "writtenToDisc": false,
+    "firstUserMessage": "Summarize the changelog since 1.2"
+  },
+  "7c1d2e04-dddd-4b1c-9d00-000000000004": {
+    "writtenToDisc": true
+  }
+}

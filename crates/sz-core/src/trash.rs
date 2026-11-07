@@ -748,7 +748,12 @@ fn apply_session(
     seq: &mut usize,
     ops: &mut Vec<TrashOp>,
 ) -> Result<()> {
-    for art in &session.artifacts {
+    // Ancestors go first. A directory artifact that contains a file artifact is moved whole, so
+    // the file is already gone when its turn comes and is skipped below. Moving the file first
+    // would create the directory's destination and make the directory move fail.
+    let mut ordered: Vec<&Artifact> = session.artifacts.iter().collect();
+    ordered.sort_by_key(|a| a.primary_path().components().count());
+    for art in ordered {
         ensure_safe(art.primary_path())?;
         match art {
             Artifact::File(p) | Artifact::Dir(p) => {
@@ -1369,6 +1374,28 @@ mod tests {
         trash.restore(&entry.id).unwrap();
         assert_eq!(fs::read(&file).unwrap(), b"x");
         assert_eq!(fs::read(dir.join("inner.txt")).unwrap(), b"y");
+    }
+
+    #[test]
+    fn file_inside_a_listed_dir_is_moved_once_even_when_listed_first() {
+        // Shape of a Pi subagent: the run file sits inside the child directory, and both are
+        // artifacts of the same session.
+        let tmp = tempfile::tempdir().unwrap();
+        let home = tmp.path().join("home");
+        let child = home.join("sessions/parent/child");
+        write(&child.join("run-0/session.jsonl"), b"{}\n");
+        write(&child.join("notes.txt"), b"n");
+        let trash = trash_in(&tmp);
+        let sessions = vec![session(
+            AgentKind::Pi,
+            "child",
+            vec![
+                Artifact::File(child.join("run-0/session.jsonl")),
+                Artifact::Dir(child.clone()),
+            ],
+            recent(),
+        )];
+        round_trip(&home, &trash, sessions);
     }
 
     #[test]

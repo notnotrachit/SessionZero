@@ -15,6 +15,9 @@ pub enum AgentKind {
     Grok,
     Gemini,
     Cursor,
+    Vscode,
+    Copilot,
+    Pi,
 }
 
 impl AgentKind {
@@ -28,6 +31,9 @@ impl AgentKind {
             AgentKind::Grok => "grok",
             AgentKind::Gemini => "gemini",
             AgentKind::Cursor => "cursor",
+            AgentKind::Vscode => "vscode",
+            AgentKind::Copilot => "copilot",
+            AgentKind::Pi => "pi",
         }
     }
 
@@ -41,6 +47,9 @@ impl AgentKind {
             AgentKind::Grok,
             AgentKind::Gemini,
             AgentKind::Cursor,
+            AgentKind::Vscode,
+            AgentKind::Copilot,
+            AgentKind::Pi,
         ]
     }
 }

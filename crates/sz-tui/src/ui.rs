@@ -98,6 +98,9 @@ fn agent_style(kind: AgentKind) -> Style {
         AgentKind::Grok => Color::White,
         AgentKind::Gemini => Color::Blue,
         AgentKind::Cursor => Color::DarkGray,
+        AgentKind::Vscode => Color::LightBlue,
+        AgentKind::Copilot => Color::LightGreen,
+        AgentKind::Pi => Color::Yellow,
     };
     Style::default().fg(color)
 }

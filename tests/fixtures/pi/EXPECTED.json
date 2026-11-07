@@ -1,0 +1,43 @@
+{
+  "_comment": "Synthetic Pi home. Paths are relative to tests/fixtures/pi. Three sessions; the child is a subagent run under its parent's directory.",
+  "sessions": [
+    {
+      "id": "0198aaaa-0000-7000-8000-000000000001",
+      "title": "Alpha refactor plan",
+      "project": "/Users/fixture/work/alpha",
+      "created": "2026-03-01T10:00:00Z",
+      "last_active": "2026-03-01T10:05:04Z",
+      "message_count": 5,
+      "parent_id": null,
+      "artifacts": [
+        ".pi/agent/sessions/--Users-fixture-work-alpha--/2026-03-01T10-00-00-000Z_0198aaaa-0000-7000-8000-000000000001.jsonl",
+        ".pi/agent/state/workspace-history/workspaces/3f9c1a2b4d5e6f708192a3b4/sessions/0198aaaa-0000-7000-8000-000000000001"
+      ]
+    },
+    {
+      "id": "0198bbbb-0000-7000-8000-000000000002",
+      "title": "Check the lexer for unused imports.",
+      "project": "/Users/fixture/work/alpha-wt",
+      "created": "2026-03-01T10:01:00Z",
+      "last_active": "2026-03-01T10:01:03Z",
+      "message_count": 2,
+      "parent_id": "0198aaaa-0000-7000-8000-000000000001",
+      "artifacts": [
+        ".pi/agent/sessions/--Users-fixture-work-alpha--/2026-03-01T10-00-00-000Z_0198aaaa-0000-7000-8000-000000000001/0198bbbb-0000-7000-8000-000000000002/run-0/session.jsonl",
+        ".pi/agent/sessions/--Users-fixture-work-alpha--/2026-03-01T10-00-00-000Z_0198aaaa-0000-7000-8000-000000000001/0198bbbb-0000-7000-8000-000000000002"
+      ]
+    },
+    {
+      "id": "0198cccc-0000-7000-8000-000000000003",
+      "title": "Why does the build script fail on Windows?",
+      "project": "/Users/fixture/work/beta",
+      "created": "2026-03-02T09:00:00Z",
+      "last_active": "2026-03-02T09:00:20Z",
+      "message_count": 2,
+      "parent_id": null,
+      "artifacts": [
+        ".pi/agent/sessions/--Users-fixture-work-beta--/2026-03-02T09-00-00-000Z_0198cccc-0000-7000-8000-000000000003.jsonl"
+      ]
+    }
+  ]
+}

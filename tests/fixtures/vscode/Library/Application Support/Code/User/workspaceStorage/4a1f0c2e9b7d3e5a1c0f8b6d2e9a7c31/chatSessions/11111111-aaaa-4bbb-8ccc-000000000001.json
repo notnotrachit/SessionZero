@@ -1,0 +1,43 @@
+{
+  "version": 3,
+  "sessionId": "11111111-aaaa-4bbb-8ccc-000000000001",
+  "creationDate": 1769940000000,
+  "initialLocation": "panel",
+  "requests": [
+    {
+      "requestId": "req-a1",
+      "timestamp": 1769940005000,
+      "message": {
+        "text": "Fix the flaky login test in alpha-app\nIt fails on CI only.",
+        "parts": []
+      },
+      "response": [
+        {
+          "kind": "toolInvocationSerialized",
+          "toolId": "copilot_readFile",
+          "invocationMessage": { "value": "Reading login.test.ts" },
+          "pastTenseMessage": { "value": "Read login.test.ts" }
+        },
+        { "value": "The race is in the mock setup." }
+      ],
+      "responseId": "resp-a1",
+      "responseTimestamp": 1769940020000,
+      "modelId": "fixture-model"
+    },
+    {
+      "requestId": "req-a2",
+      "timestamp": 1770109800000,
+      "message": {
+        "text": "Thanks, apply the fix.",
+        "parts": []
+      },
+      "response": [
+        { "value": "Applied the fix to the mock." }
+      ],
+      "responseId": "resp-a2",
+      "responseTimestamp": 1770109812000,
+      "modelId": "fixture-model"
+    }
+  ],
+  "hasPendingEdits": false
+}

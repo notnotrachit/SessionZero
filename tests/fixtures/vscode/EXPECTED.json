@@ -1,0 +1,63 @@
+{
+  "home": "tests/fixtures/vscode",
+  "note": "Synthetic fake HOME with three VS Code chat sessions. Session files are fixtures written for this test, not captured from a real VS Code install. Timestamps are epoch milliseconds in the files and ISO-8601 UTC here. bytes = own file sizes plus the chatEditingSessions/<id> directory (for session 1). The scan never reads mtime for these sessions because each has request timestamps. Session 1 is a flat .json, session 2 is a .jsonl operation log, session 3 is an empty-window .json.",
+  "sessions": [
+    {
+      "kind": "workspace-json",
+      "id": "11111111-aaaa-4bbb-8ccc-000000000001",
+      "file_rel_to_home": "Library/Application Support/Code/User/workspaceStorage/4a1f0c2e9b7d3e5a1c0f8b6d2e9a7c31/chatSessions/11111111-aaaa-4bbb-8ccc-000000000001.json",
+      "title": "Fix the flaky login test in alpha-app",
+      "title_source": "first line of the first request text (no customTitle)",
+      "project": "/Users/fixture/work/alpha-app",
+      "project_source": "workspace.json folder file:///Users/fixture/work/alpha-app",
+      "created": "2026-02-01T10:00:00Z",
+      "last_active": "2026-02-03T09:10:12Z",
+      "last_active_source": "responseTimestamp of the last request",
+      "message_count": 4,
+      "message_count_note": "2 requests x 2 (user + assistant)",
+      "artifacts_rel_to_home": [
+        "Library/Application Support/Code/User/workspaceStorage/4a1f0c2e9b7d3e5a1c0f8b6d2e9a7c31/chatSessions/11111111-aaaa-4bbb-8ccc-000000000001.json",
+        "Library/Application Support/Code/User/workspaceStorage/4a1f0c2e9b7d3e5a1c0f8b6d2e9a7c31/chatEditingSessions/11111111-aaaa-4bbb-8ccc-000000000001/"
+      ],
+      "bytes": 1431,
+      "bytes_note": "chatSessions json 1170 + chatEditingSessions dir 261 (state.json 208 + contents/0001.txt 53)"
+    },
+    {
+      "kind": "workspace-jsonl",
+      "id": "22222222-bbbb-4ccc-8ddd-000000000002",
+      "file_rel_to_home": "Library/Application Support/Code/User/workspaceStorage/b7e3d91c0a5f4e28d6c1b9a0f3e7d245/chatSessions/22222222-bbbb-4ccc-8ddd-000000000002.jsonl",
+      "title": "Beta: CLI flags",
+      "title_source": "customTitle, set by a kind=1 entry",
+      "project": "/Users/fixture/work/beta tool",
+      "project_source": "workspace.json folder file:///Users/fixture/work/beta%20tool (percent-decoded)",
+      "created": "2026-02-02T14:00:00Z",
+      "last_active": "2026-02-02T14:05:09Z",
+      "last_active_source": "responseTimestamp of the last request, set by a kind=1 entry",
+      "message_count": 4,
+      "message_count_note": "2 requests x 2",
+      "artifacts_rel_to_home": [
+        "Library/Application Support/Code/User/workspaceStorage/b7e3d91c0a5f4e28d6c1b9a0f3e7d245/chatSessions/22222222-bbbb-4ccc-8ddd-000000000002.jsonl"
+      ],
+      "bytes": 942,
+      "bytes_note": "the .jsonl file only; the replay covers: kind 0 initial, kind 2 push, kind 1 set, kind 2 truncate (i=0) and replace, kind 3 delete (responderUsername), kind 1 customTitle"
+    },
+    {
+      "kind": "empty-window-json",
+      "id": "33333333-cccc-4ddd-8eee-000000000003",
+      "file_rel_to_home": "Library/Application Support/Code/User/globalStorage/emptyWindowChatSessions/33333333-cccc-4ddd-8eee-000000000003.json",
+      "title": "What does this regex do?",
+      "title_source": "first line of the first request text (no customTitle)",
+      "project": null,
+      "project_source": "no workspace; emptyWindowChatSessions has no workspace.json",
+      "created": "2026-02-05T08:00:00Z",
+      "last_active": "2026-02-05T08:00:04Z",
+      "last_active_source": "responseTimestamp of the last request",
+      "message_count": 2,
+      "message_count_note": "1 request x 2",
+      "artifacts_rel_to_home": [
+        "Library/Application Support/Code/User/globalStorage/emptyWindowChatSessions/33333333-cccc-4ddd-8eee-000000000003.json"
+      ],
+      "bytes": 544
+    }
+  ]
+}

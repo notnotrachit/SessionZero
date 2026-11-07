@@ -1,0 +1,14 @@
+{
+  "sessionId": "7c1d2e03-cccc-4b1c-9d00-000000000003",
+  "startTime": "2026-11-06T10:00:00.000Z",
+  "chatMessages": [
+    {"role": "user", "content": "Summarize the changelog since 1.2"},
+    {"role": "tool", "content": "CHANGELOG.md read"},
+    {"role": "assistant", "content": "Version 1.3 adds retries and drops the legacy flag."},
+    {"role": "assistant", "content": null}
+  ],
+  "timeline": [
+    {"id": "tl-1", "timestamp": "2026-11-06T10:00:00.000Z", "type": "info", "text": "Session started"},
+    {"id": "tl-2", "timestamp": "2026-11-06T10:03:00.000Z", "type": "copilot", "text": "Answered"}
+  ]
+}

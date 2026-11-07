@@ -1,0 +1,3 @@
+{"type":"session","version":3,"id":"0198bbbb-0000-7000-8000-000000000002","timestamp":"2026-03-01T10:01:00.000Z","cwd":"/Users/fixture/work/alpha-wt"}
+{"type":"message","id":"c1","parentId":null,"timestamp":"2026-03-01T10:01:01.000Z","message":{"role":"user","content":[{"type":"text","text":"Check the lexer for unused imports."}]}}
+{"type":"message","id":"c2","parentId":"c1","timestamp":"2026-03-01T10:01:03.000Z","message":{"role":"assistant","content":[{"type":"text","text":"No unused imports found."}],"stopReason":"stop"}}

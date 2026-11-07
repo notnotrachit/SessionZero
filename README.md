@@ -16,8 +16,11 @@ Nothing is removed outright by default. Deleted sessions go to a trash you can r
 | Grok CLI | `grok` | `~/.grok/sessions/<url-encoded-cwd>/<session-id>/` | One session directory |
 | Gemini CLI and Antigravity | `gemini` | `~/.gemini/tmp/<key>/chats/session-*.json`, Antigravity conversation stores | One chat file or conversation store |
 | Cursor | `cursor` | `~/.cursor/projects/<slug>/agent-transcripts/`, composer rows in Cursor's `globalStorage/state.vscdb` | One agent transcript or composer |
+| VS Code | `vscode` | `~/Library/Application Support/Code/User/workspaceStorage/<hash>/chatSessions/` and `globalStorage/emptyWindowChatSessions/` (also Code - Insiders and VSCodium; `~/.config/Code/User` on Linux) | One chat session file, with its editing-session directory |
+| GitHub Copilot CLI | `copilot` | `~/.copilot/session-state/<UUID>/` | One session directory, with its per-session state |
+| Pi coding agent | `pi` | `~/.pi/agent/sessions/<cwd-dir>/` (JSONL files), plus per-session state under `~/.pi/agent/state/workspace-history/` | One session JSONL file: a top-level session, a fork, or a subagent run |
 
-Agent aliases also work: `claude-code`, `kiro-cli`, `kiro_crew`, `crew`, `open-code`, `antigravity`.
+Agent aliases also work: `claude-code`, `kiro-cli`, `kiro_crew`, `crew`, `open-code`, `antigravity`, `code`, `vs-code`, `vscode-insiders`, `gh-copilot`, `github-copilot`, `pi-agent`, `pi-coding-agent`.
 
 ## Install
 

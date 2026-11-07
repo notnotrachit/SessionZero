@@ -1,0 +1,11 @@
+{"type":"session","version":3,"id":"0198aaaa-0000-7000-8000-000000000001","timestamp":"2026-03-01T10:00:00.000Z","cwd":"/Users/fixture/work/alpha"}
+{"type":"model_change","id":"a1b2c301","parentId":null,"timestamp":"2026-03-01T10:00:00.100Z","provider":"openai","modelId":"model-x"}
+{"type":"session_info","id":"a1b2c302","parentId":"a1b2c301","timestamp":"2026-03-01T10:00:01.000Z","name":"Alpha refactor plan"}
+{"type":"message","id":"a1b2c303","parentId":"a1b2c302","timestamp":"2026-03-01T10:00:02.000Z","message":{"role":"user","content":[{"type":"text","text":"Split the parser module into two files."}]}}
+{"type":"message","id":"a1b2c304","parentId":"a1b2c303","timestamp":"2026-03-01T10:00:05.000Z","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Read the file first."},{"type":"toolCall","id":"call_1","name":"read","arguments":{"path":"src/parser.rs"}}],"stopReason":"toolUse"}}
+{"type":"message","id":"a1b2c305","parentId":"a1b2c304","timestamp":"2026-03-01T10:00:06.000Z","message":{"role":"toolResult","toolCallId":"call_1","toolName":"read","content":[{"type":"text","text":"fn parse() {}"}],"isError":false}}
+{"type":"message","id":"a1b2c306","parentId":"a1b2c305","timestamp":"2026-03-01T10:00:09.000Z","message":{"role":"assistant","content":[{"type":"text","text":"The parser now lives in two files."}],"stopReason":"stop"}}
+{"type":"custom_message","id":"a1b2c307","parentId":"a1b2c306","timestamp":"2026-03-01T10:00:10.000Z","customType":"note","content":"Injected note.","display":false}
+{"type":"compaction","id":"a1b2c308","parentId":"a1b2c307","timestamp":"2026-03-01T10:00:11.000Z","summary":"Summary text.","firstKeptEntryId":"a1b2c306","tokensBefore":1000}
+{"type":"message","id":"a1b2c309","parentId":"a1b2c308","timestamp":"2026-03-01T10:05:00.000Z","message":{"role":"user","content":[{"type":"text","text":"Thanks, now add tests."}]}}
+{"type":"message","id":"a1b2c310","parentId":"a1b2c309","timestamp":"2026-03-01T10:05:04.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Added tests for both files."}],"stopReason":"stop"}}

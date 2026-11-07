@@ -26,12 +26,13 @@ pub fn mtime(p: &Path) -> Option<DateTime<Utc>> {
     Some(DateTime::<Utc>::from(modified))
 }
 
-/// True when a running process matches one of `names` (case-insensitive, whole tokens only).
+/// True when a running process matches one of `names` (case-insensitive, whole path components
+/// only). See `process_matches` for the rules.
 ///
-/// A process matches through its name, through each component of its executable path, and through
-/// each whitespace-separated command-line token, taken with its last `/` segment. So
-/// `python3.12 -m kiro_crew` matches `kiro_crew`, but `kiro_crew_helper` does not. Only process
-/// lists, command lines and executable paths are read. CPU and memory are not refreshed.
+/// Node-based CLIs match through their script path: `node .../@github/copilot/index.js` matches
+/// `@github/copilot`. A name like `kiro_crew` still matches `python3.12 -m kiro_crew`, but not
+/// `kiro_crew_helper`. Only process lists, command lines and executable paths are read. CPU and
+/// memory are not refreshed.
 pub fn running_processes(names: &[&str]) -> bool {
     let wanted: Vec<String> = names.iter().map(|n| n.to_lowercase()).collect();
     let mut sys = System::new();
@@ -57,24 +58,43 @@ pub fn running_processes(names: &[&str]) -> bool {
     })
 }
 
-/// True when one of the lowercase `wanted` names equals a whole token of the process: its name,
-/// a component of its executable path, or the last `/` segment of a command-line word.
+/// True when one of the `wanted` names matches a process. A name is split on `/` into path
+/// components, and it matches when those components appear next to each other, in whole, in
+/// one of the process's component lists: its name, its executable path, or any whitespace-
+/// separated command-line word split on `/`. So `pi` matches `node /x/bin/pi`, and
+/// `@github/copilot` matches `node /x/node_modules/@github/copilot/index.js`, but neither
+/// matches a longer component such as `pinball` or `@github/copilot-helper`.
 fn process_matches(name: &str, exe: Option<&Path>, cmd: &[String], wanted: &[String]) -> bool {
-    let mut tokens: Vec<String> = vec![name.to_lowercase()];
+    let mut lists: Vec<Vec<String>> = vec![vec![name.to_lowercase()]];
     if let Some(exe) = exe {
-        tokens.extend(
+        lists.push(
             exe.components()
                 .filter_map(|c| c.as_os_str().to_str())
-                .map(str::to_lowercase),
+                .map(str::to_lowercase)
+                .collect(),
         );
     }
     for arg in cmd {
         for word in arg.split_whitespace() {
-            let base = word.rsplit('/').next().unwrap_or(word);
-            tokens.push(base.to_lowercase());
+            lists.push(split_components(word));
         }
     }
-    wanted.iter().any(|w| tokens.iter().any(|t| t == w))
+    wanted.iter().any(|w| {
+        let parts = split_components(w);
+        !parts.is_empty()
+            && lists
+                .iter()
+                .any(|list| list.windows(parts.len()).any(|run| run == parts.as_slice()))
+    })
+}
+
+/// Lowercased, non-empty `/`-separated components of a token.
+fn split_components(token: &str) -> Vec<String> {
+    token
+        .split('/')
+        .filter(|part| !part.is_empty())
+        .map(str::to_lowercase)
+        .collect()
 }
 
 /// True when a session's project path names no project: the filesystem root, or the home
@@ -150,6 +170,96 @@ mod tests {
         assert!(!process_matches("grokking", Some(exe), &[], &w));
         let exe = Path::new("/usr/local/bin/grok");
         assert!(process_matches("other", Some(exe), &[], &w));
+    }
+
+    #[test]
+    fn node_cli_matches_through_a_script_path_component() {
+        // `node` runs the CLI, so the agent name is only in the script path.
+        let w = wanted(&["copilot", "@github/copilot"]);
+        let argv = cmd(&[
+            "node",
+            "/usr/local/lib/node_modules/@github/copilot/index.js",
+        ]);
+        assert!(process_matches("node", None, &argv, &w));
+        assert!(process_matches(
+            "node",
+            Some(Path::new("/opt/homebrew/bin/node")),
+            &cmd(&["node", "/Users/fake/.npm/_npx/x/node_modules/@github/copilot/npm-loader.js"]),
+            &w
+        ));
+    }
+
+    #[test]
+    fn multi_component_name_needs_consecutive_components() {
+        let w = wanted(&["@github/copilot"]);
+        // Both parts present, but not in order.
+        assert!(!process_matches(
+            "node",
+            None,
+            &cmd(&["node", "/x/copilot/@github/index.js"]),
+            &w
+        ));
+        // Only the scope present.
+        assert!(!process_matches(
+            "node",
+            None,
+            &cmd(&["node", "/x/node_modules/@github/codex/index.js"]),
+            &w
+        ));
+        // A longer package name is not the same component.
+        assert!(!process_matches(
+            "node",
+            None,
+            &cmd(&["node", "/x/node_modules/@github/copilot-helper/index.js"]),
+            &w
+        ));
+        // Executable path works the same way.
+        let exe = Path::new("/opt/lib/node_modules/@github/copilot/bin");
+        assert!(process_matches("node", Some(exe), &[], &w));
+    }
+
+    #[test]
+    fn pi_matches_its_bin_link_and_its_package_directory() {
+        let w = wanted(&["pi", "pi-coding-agent"]);
+        assert!(process_matches(
+            "node",
+            None,
+            &cmd(&["node", "/Users/fake/.nvm/versions/node/v22/bin/pi"]),
+            &w
+        ));
+        assert!(process_matches(
+            "node",
+            None,
+            &cmd(&[
+                "node",
+                "/Users/fake/.npm/lib/node_modules/@mariozechner/pi-coding-agent/dist/cli.js"
+            ]),
+            &w
+        ));
+    }
+
+    #[test]
+    fn pi_does_not_match_a_longer_or_unrelated_component() {
+        let w = wanted(&["pi", "pi-coding-agent"]);
+        assert!(!process_matches(
+            "node",
+            None,
+            &cmd(&["node", "/Users/fake/pinball/index.js"]),
+            &w
+        ));
+        assert!(!process_matches(
+            "node",
+            None,
+            &cmd(&["node", "/Users/fake/pi-coding-agent-docs/server.js"]),
+            &w
+        ));
+        assert!(!process_matches("zsh", None, &cmd(&["zsh", "-l"]), &w));
+    }
+
+    #[test]
+    fn empty_or_slash_only_names_never_match() {
+        let w = wanted(&["/", ""]);
+        assert!(!process_matches("node", Some(Path::new("/usr/bin/node")), &cmd(&["node", "/"]), &w));
     }
 
     #[test]

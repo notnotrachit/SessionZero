@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"0198cccc-0000-7000-8000-000000000003","timestamp":"2026-03-02T09:00:00.000Z","cwd":"/Users/fixture/work/beta"}
+{"type":"model_change","id":"b1","parentId":null,"timestamp":"2026-03-02T09:00:00.100Z","provider":"kiro","modelId":"model-y"}
+{"type":"message","id":"b2","parentId":"b1","timestamp":"2026-03-02T09:00:01.000Z","message":{"role":"user","content":"Why does the build script fail on Windows?"}}
+{"type":"message","id":"b3","parentId":"b2","timestamp":"2026-03-02T09:00:1
+{"type":"message","id":"b4","parentId":"b2","timestamp":"2026-03-02T09:00:20.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Path separators are hard-coded in build.rs."}],"stopReason":"stop"}}

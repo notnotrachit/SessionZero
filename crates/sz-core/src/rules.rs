@@ -77,6 +77,9 @@ pub fn parse_agent(s: &str) -> Option<AgentKind> {
         "kiro_crew" | "kirocrew" | "crew" => AgentKind::KiroCrew,
         "open-code" | "open_code" => AgentKind::OpenCode,
         "antigravity" => AgentKind::Gemini,
+        "code" | "vs-code" | "vscode-insiders" => AgentKind::Vscode,
+        "gh-copilot" | "github-copilot" => AgentKind::Copilot,
+        "pi-agent" | "pi-coding-agent" => AgentKind::Pi,
         _ => return None,
     })
 }

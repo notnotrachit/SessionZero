@@ -1,0 +1,3 @@
+{"type":"session.start","data":{"sessionId":"7c1d2e02-bbbb-4b1c-9d00-000000000002","version":1,"producer":"copilot-agent","copilotVersion":"0.0.0-fixture","startTime":"2026-11-05T09:00:00.000Z","context":{}},"id":"ev-001","timestamp":"2026-11-05T09:00:00.100Z","parentId":null}
+{"type":"user.message","data":{"content":"Explain the build script","attachments":[],"agentMode":"interactive"},"id":"ev-002","timestamp":"2026-11-05T09:00:20.000Z","parentId":"ev-001"}
+{"type":"assistant.message","data":{"messageId":"msg-s2","content":"It runs the lint step, then the tests.","toolRequests":[]},"id":"ev-003","timestamp":"2026-11-05T09:01:30.000Z","parentId":"ev-002"}
