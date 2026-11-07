@@ -1,0 +1,11 @@
+{
+  "id": "prt_msg_0001_02_0",
+  "messageID": "msg_0001_02",
+  "sessionID": "ses_fixture0001",
+  "type": "text",
+  "text": "Add a regression test.",
+  "time": {
+    "start": 1767830403000,
+    "end": 1767830403000
+  }
+}

@@ -1,0 +1,2 @@
+{"timestamp": "2026-02-01T10:00:00.000000Z", "session_id": "01a10000-0000-7000-8000-000000000001", "prompt": "Refactor the config loader to read TOML.", "is_bash": false}
+{"timestamp": "2026-02-01T10:00:00.000000Z", "session_id": "other-fixture", "prompt": "(another session's prompt)", "is_bash": false}

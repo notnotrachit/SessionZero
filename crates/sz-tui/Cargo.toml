@@ -1,0 +1,23 @@
+[package]
+name = "sz-tui"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "sz"
+path = "src/main.rs"
+
+[dependencies]
+sz-core = { path = "../sz-core" }
+anyhow.workspace = true
+chrono.workspace = true
+clap.workspace = true
+dirs.workspace = true
+ratatui.workspace = true
+crossterm.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

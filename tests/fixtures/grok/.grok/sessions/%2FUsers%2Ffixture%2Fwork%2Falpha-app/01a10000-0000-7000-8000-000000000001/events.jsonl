@@ -1,0 +1,2 @@
+{"ts": "2026-02-01T10:00:01.000000Z", "type": "turn_started", "session_id": "01a10000-0000-7000-8000-000000000001", "turn_number": 1, "model_id": "example-model", "yolo_mode": false, "conversation_message_count": 0, "session_relationship": "root", "schema_version": 1}
+{"ts": "2026-02-01T10:19:58.000000Z", "type": "turn_ended", "session_id": "01a10000-0000-7000-8000-000000000001", "turn_number": 1, "model_id": "example-model", "yolo_mode": false, "conversation_message_count": 0, "session_relationship": "root", "schema_version": 1}

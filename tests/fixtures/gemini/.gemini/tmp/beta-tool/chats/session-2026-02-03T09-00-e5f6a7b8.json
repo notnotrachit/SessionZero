@@ -1,0 +1,46 @@
+{
+  "sessionId": "e5f6a7b8-2222-4bbb-8ccc-000000000002",
+  "projectHash": "f74745ceda5e4690adc670dd4de642a1aca4535c72f44a6c0f9a6de81c85a53b",
+  "startTime": "2026-02-03T09:00:00.000Z",
+  "lastUpdated": "2026-02-03T09:12:00.000Z",
+  "messages": [
+    {
+      "id": "m-0101",
+      "timestamp": "2026-02-03T09:00:00.000Z",
+      "type": "user",
+      "content": "fixture tool request"
+    },
+    {
+      "id": "m-0102",
+      "timestamp": "2026-02-03T09:12:00.000Z",
+      "type": "gemini",
+      "content": "fixture tool answer",
+      "thoughts": [],
+      "tokens": {
+        "input": 300,
+        "output": 60,
+        "cached": 0,
+        "thoughts": 0,
+        "tool": 25,
+        "total": 385
+      },
+      "model": "gemini-fixture-model",
+      "toolCalls": [
+        {
+          "id": "call-fixture-1",
+          "name": "run_shell_command",
+          "args": {
+            "command": "echo fixture"
+          },
+          "result": [],
+          "status": "success",
+          "timestamp": "2026-02-03T09:11:00.000Z",
+          "displayName": "Shell",
+          "description": "invented description",
+          "renderOutputAsMarkdown": false,
+          "resultDisplay": "fixture"
+        }
+      ]
+    }
+  ]
+}

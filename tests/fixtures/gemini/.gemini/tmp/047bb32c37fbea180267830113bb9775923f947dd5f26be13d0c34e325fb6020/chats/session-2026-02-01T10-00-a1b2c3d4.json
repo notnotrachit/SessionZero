@@ -1,0 +1,58 @@
+{
+  "sessionId": "a1b2c3d4-1111-4aaa-8bbb-000000000001",
+  "projectHash": "047bb32c37fbea180267830113bb9775923f947dd5f26be13d0c34e325fb6020",
+  "startTime": "2026-02-01T10:00:00.000Z",
+  "lastUpdated": "2026-02-01T10:20:00.000Z",
+  "messages": [
+    {
+      "id": "m-0001",
+      "timestamp": "2026-02-01T10:00:00.000Z",
+      "type": "user",
+      "content": "fixture question one"
+    },
+    {
+      "id": "m-0002",
+      "timestamp": "2026-02-01T10:00:08.000Z",
+      "type": "gemini",
+      "content": "fixture answer one",
+      "thoughts": [
+        {
+          "subject": "Fixture planning",
+          "description": "invented thought text",
+          "timestamp": "2026-02-01T10:00:05.000Z"
+        }
+      ],
+      "tokens": {
+        "input": 120,
+        "output": 40,
+        "cached": 0,
+        "thoughts": 15,
+        "tool": 0,
+        "total": 175
+      },
+      "model": "gemini-fixture-model"
+    },
+    {
+      "id": "m-0003",
+      "timestamp": "2026-02-01T10:10:00.000Z",
+      "type": "user",
+      "content": "fixture question two"
+    },
+    {
+      "id": "m-0004",
+      "timestamp": "2026-02-01T10:20:00.000Z",
+      "type": "gemini",
+      "content": "fixture answer two",
+      "thoughts": [],
+      "tokens": {
+        "input": 260,
+        "output": 55,
+        "cached": 100,
+        "thoughts": 0,
+        "tool": 0,
+        "total": 415
+      },
+      "model": "gemini-fixture-model"
+    }
+  ]
+}

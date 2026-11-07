@@ -1,0 +1,12 @@
+[
+  {
+    "content": "Reproduce redirect loop",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "content": "Add regression test",
+    "status": "completed",
+    "priority": "high"
+  }
+]

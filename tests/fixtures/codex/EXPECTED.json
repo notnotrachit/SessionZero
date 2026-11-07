@@ -1,0 +1,54 @@
+{
+  "_about": "Expected parse results for the synthetic Codex fixture home at tests/fixtures/codex. Paths in artifacts are relative to this fixture home. index_refs lists shared index rows that must be updated on delete. Rules are in docs/formats/codex.md.",
+  "sessions": [
+    {
+      "id": "019c0001-aaaa-7bbb-8ccc-000000000001",
+      "title": "Add retry to uploader",
+      "title_source": "session_index thread_name",
+      "project": "/Users/test/proj-alpha",
+      "created": "2026-11-02T10:48:18.100Z",
+      "last_active": "2026-11-02T10:52:40.520Z",
+      "message_count": 4,
+      "artifacts": [
+        ".codex/sessions/2026/11/02/rollout-2026-11-02T10-48-18-019c0001-aaaa-7bbb-8ccc-000000000001.jsonl",
+        ".codex/shell_snapshots/019c0001-aaaa-7bbb-8ccc-000000000001.1793989698000000000.sh"
+      ],
+      "index_refs": {
+        "session_index.jsonl": 1,
+        "history.jsonl": 2
+      }
+    },
+    {
+      "id": "019c0002-bbbb-7bbb-8ccc-000000000002",
+      "title": "Why does the nightly export skip empty folders?",
+      "title_source": "first UserMessage item (no session_index entry)",
+      "project": null,
+      "created": "2026-11-03T09:12:05.050Z",
+      "last_active": "2026-11-03T09:14:31.002Z",
+      "message_count": 2,
+      "artifacts": [
+        ".codex/sessions/2026/11/03/rollout-2026-11-03T09-12-05-019c0002-bbbb-7bbb-8ccc-000000000002.jsonl"
+      ],
+      "index_refs": {
+        "session_index.jsonl": 0,
+        "history.jsonl": 1
+      }
+    },
+    {
+      "id": "019c0003-cccc-7bbb-8ccc-000000000003",
+      "title": "Migrate config format",
+      "title_source": "session_index thread_name",
+      "project": "/Users/test/proj-beta",
+      "created": "2026-10-20T08:00:00.000Z",
+      "last_active": "2026-10-20T08:21:09.000Z",
+      "message_count": 2,
+      "artifacts": [
+        ".codex/archived_sessions/rollout-2026-10-20T08-00-00-019c0003-cccc-7bbb-8ccc-000000000003.jsonl"
+      ],
+      "index_refs": {
+        "session_index.jsonl": 1,
+        "history.jsonl": 0
+      }
+    }
+  ]
+}

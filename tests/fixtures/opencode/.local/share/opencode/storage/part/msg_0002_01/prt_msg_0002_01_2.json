@@ -1,0 +1,17 @@
+{
+  "id": "prt_msg_0002_01_2",
+  "messageID": "msg_0002_01",
+  "sessionID": "ses_fixture0002",
+  "type": "step-finish",
+  "reason": "stop",
+  "cost": 0,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "reasoning": 0,
+    "cache": {
+      "read": 0,
+      "write": 0
+    }
+  }
+}

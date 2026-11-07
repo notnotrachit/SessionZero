@@ -1,0 +1,11 @@
+{
+  "id": "prt_msg_0003_00_0",
+  "messageID": "msg_0003_00",
+  "sessionID": "ses_fixture0003",
+  "type": "text",
+  "text": "Write a table of the CLI flags in README.",
+  "time": {
+    "start": 1767831301000,
+    "end": 1767831301000
+  }
+}

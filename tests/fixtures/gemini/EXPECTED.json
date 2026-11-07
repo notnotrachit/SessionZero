@@ -1,0 +1,83 @@
+{
+  "home": "tests/fixtures/gemini",
+  "note": "Synthetic fake HOME at tests/fixtures/gemini/.gemini. Covers Gemini CLI (tmp/<projectHash or alias>/chats/session-*.json) and Antigravity CLI (antigravity-cli/conversations/<id>.db + conversation_summaries.db). projectHash = sha256 of the absolute project path (verified on the real machine). projects.json maps a path to a directory alias; beta-tool is stored under tmp/beta-tool/ instead of its hash. logs.json is shared by every session in its project dir: filter by sessionId, never delete the file. No process is running for these fixtures, so running is false.",
+  "sessions": [
+    {
+      "agent": "gemini-cli",
+      "id": "a1b2c3d4-1111-4aaa-8bbb-000000000001",
+      "title": "fixture question one",
+      "title_source": "first user message (no title field is stored)",
+      "project": "/Users/fixture/work/alpha-app",
+      "project_source": "projectHash 047bb32c... equals sha256 of the path; no alias in projects.json",
+      "created": "2026-02-01T10:00:00.000Z",
+      "last_active": "2026-02-01T10:20:00.000Z",
+      "message_count": 4,
+      "user_message_count": 2,
+      "running": false,
+      "artifacts_rel_to_home": [
+        ".gemini/tmp/047bb32c37fbea180267830113bb9775923f947dd5f26be13d0c34e325fb6020/chats/session-2026-02-01T10-00-a1b2c3d4.json"
+      ],
+      "shared_artifacts_rel_to_home": [
+        ".gemini/tmp/047bb32c37fbea180267830113bb9775923f947dd5f26be13d0c34e325fb6020/logs.json"
+      ],
+      "dir_bytes": 1430,
+      "parent_session_id": null
+    },
+    {
+      "agent": "gemini-cli",
+      "id": "e5f6a7b8-2222-4bbb-8ccc-000000000002",
+      "title": "fixture tool request",
+      "title_source": "first user message (no title field is stored)",
+      "project": "/Users/fixture/work/beta-tool",
+      "project_source": "projects.json alias beta-tool; projectHash f74745ce... equals sha256 of the path",
+      "created": "2026-02-03T09:00:00.000Z",
+      "last_active": "2026-02-03T09:12:00.000Z",
+      "message_count": 2,
+      "user_message_count": 1,
+      "tool_call_count": 1,
+      "running": false,
+      "artifacts_rel_to_home": [
+        ".gemini/tmp/beta-tool/chats/session-2026-02-03T09-00-e5f6a7b8.json"
+      ],
+      "shared_artifacts_rel_to_home": [
+        ".gemini/tmp/beta-tool/logs.json"
+      ],
+      "dir_bytes": 1220,
+      "parent_session_id": null
+    },
+    {
+      "agent": "antigravity-cli",
+      "id": "5a1b2c3d-4444-4eee-8fff-000000000004",
+      "title": "fixture preview line",
+      "title_source": "title column is empty in every real row, so the title is the first line of preview (was \"\" before the adapter was written; changed to match the rule written in this same entry)",
+      "project": "/Users/fixture/work/alpha-app",
+      "project_source": "conversation_summaries.workspace_uris file:///Users/fixture/work/alpha-app",
+      "created": null,
+      "created_note": "no creation time stored; fall back to file birth time",
+      "last_active": "2026-02-05T10:05:00.000Z",
+      "message_count": 4,
+      "message_count_source": "conversation_summaries.step_count (equals steps table rows)",
+      "user_message_count": null,
+      "running": false,
+      "running_note": "presence/<id>.lock exists but its meaning is unverified; do not treat it as running without a live-process check",
+      "artifacts_rel_to_home": [
+        ".gemini/antigravity-cli/conversations/5a1b2c3d-4444-4eee-8fff-000000000004.db",
+        ".gemini/antigravity-cli/presence/5a1b2c3d-4444-4eee-8fff-000000000004.lock",
+        ".gemini/antigravity-cli/brain/5a1b2c3d-4444-4eee-8fff-000000000004/task.md",
+        ".gemini/antigravity-cli/brain/5a1b2c3d-4444-4eee-8fff-000000000004/scratch/.gitkeep",
+        ".gemini/antigravity-cli/brain/5a1b2c3d-4444-4eee-8fff-000000000004/.system_generated/logs/.gitkeep"
+      ],
+      "shared_artifacts_rel_to_home": [
+        ".gemini/antigravity-cli/conversation_summaries.db (row conversation_id = 5a1b2c3d-4444-4eee-8fff-000000000004; DELETE FROM conversation_summaries WHERE conversation_id = ?)"
+      ],
+      "dir_bytes": 49193,
+      "dir_bytes_note": "conversation .db + presence lock + task.md + two .gitkeep files; the summaries row is not counted",
+      "parent_session_id": null
+    }
+  ],
+  "shared_files": [
+    ".gemini/projects.json (path to alias map; never delete)",
+    ".gemini/tmp/047bb32c37fbea180267830113bb9775923f947dd5f26be13d0c34e325fb6020/logs.json",
+    ".gemini/tmp/beta-tool/logs.json"
+  ]
+}

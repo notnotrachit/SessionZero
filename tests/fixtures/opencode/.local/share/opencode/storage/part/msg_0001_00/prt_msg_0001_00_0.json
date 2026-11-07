@@ -1,0 +1,11 @@
+{
+  "id": "prt_msg_0001_00_0",
+  "messageID": "msg_0001_00",
+  "sessionID": "ses_fixture0001",
+  "type": "text",
+  "text": "Login redirects back to /login after OAuth. Find out why.",
+  "time": {
+    "start": 1767830401000,
+    "end": 1767830401000
+  }
+}

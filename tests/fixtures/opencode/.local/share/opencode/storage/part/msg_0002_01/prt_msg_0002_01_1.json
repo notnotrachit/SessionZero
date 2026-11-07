@@ -1,0 +1,11 @@
+{
+  "id": "prt_msg_0002_01_1",
+  "messageID": "msg_0002_01",
+  "sessionID": "ses_fixture0002",
+  "type": "text",
+  "text": "src/upload/client.ts and src/upload/queue.ts. No retry policy exists.",
+  "time": {
+    "start": 1767830462000,
+    "end": 1767830462000
+  }
+}

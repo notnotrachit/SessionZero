@@ -1,0 +1,11 @@
+{
+  "id": "msg_0003_00",
+  "sessionID": "ses_fixture0003",
+  "role": "user",
+  "time": {
+    "created": 1767831301000
+  },
+  "agent": "build",
+  "modelID": "example-model",
+  "providerID": "example"
+}

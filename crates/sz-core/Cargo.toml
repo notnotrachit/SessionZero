@@ -1,0 +1,23 @@
+[package]
+name = "sz-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json = { workspace = true, features = ["preserve_order"] }
+chrono.workspace = true
+walkdir.workspace = true
+rayon.workspace = true
+rusqlite.workspace = true
+sysinfo.workspace = true
+dirs.workspace = true
+regex.workspace = true
+humansize.workspace = true
+base64 = "0.23.1"
+zstd = "0.13"
+
+[dev-dependencies]
+tempfile.workspace = true

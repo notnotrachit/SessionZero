@@ -1,0 +1,17 @@
+{
+  "child_cwd": "/Users/fixture/work/alpha-app",
+  "child_session_id": "01a10000-0000-7000-8000-0000000000a1",
+  "completed_at": "2026-02-01T10:12:00.000000Z",
+  "description": "Find config readers",
+  "duration_ms": 4000,
+  "effective_context_source": "fresh",
+  "effective_model_id": "example-model",
+  "parent_session_id": "01a10000-0000-7000-8000-000000000001",
+  "prompt": "Find every caller of load_config.",
+  "started_at": "2026-02-01T10:11:56.000000Z",
+  "status": "completed",
+  "subagent_id": "sub-fixture-1",
+  "subagent_type": "explore",
+  "tool_calls": 1,
+  "turns": 1
+}

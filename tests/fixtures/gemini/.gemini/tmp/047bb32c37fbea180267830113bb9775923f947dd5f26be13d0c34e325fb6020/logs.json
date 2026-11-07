@@ -1,0 +1,16 @@
+[
+  {
+    "sessionId": "a1b2c3d4-1111-4aaa-8bbb-000000000001",
+    "messageId": 0,
+    "type": "user",
+    "message": "fixture question one",
+    "timestamp": "2026-02-01T10:00:00.000Z"
+  },
+  {
+    "sessionId": "a1b2c3d4-1111-4aaa-8bbb-000000000001",
+    "messageId": 1,
+    "type": "user",
+    "message": "fixture question two",
+    "timestamp": "2026-02-01T10:10:00.000Z"
+  }
+]

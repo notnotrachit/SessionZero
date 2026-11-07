@@ -1,0 +1,11 @@
+{
+  "id": "prt_msg_0002_00_0",
+  "messageID": "msg_0002_00",
+  "sessionID": "ses_fixture0002",
+  "type": "text",
+  "text": "List retry-relevant files under src/upload.",
+  "time": {
+    "start": 1767830461000,
+    "end": 1767830461000
+  }
+}

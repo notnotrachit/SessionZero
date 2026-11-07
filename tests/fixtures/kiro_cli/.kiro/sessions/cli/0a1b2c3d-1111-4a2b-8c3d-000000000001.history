@@ -1,0 +1,2 @@
+Login loops back to /signin after OAuth. Find the redirect bug.
+Keep the returnTo param when the session cookie is missing.

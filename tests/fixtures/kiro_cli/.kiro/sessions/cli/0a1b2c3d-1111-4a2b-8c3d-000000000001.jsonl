@@ -1,0 +1,5 @@
+{"version":"v1","kind":"Prompt","data":{"message_id":"m-A-01","content":[{"kind":"text","data":"Login loops back to /signin after OAuth. Find the redirect bug."}],"meta":{"timestamp":"2026-01-08T10:00:05Z"}}}
+{"version":"v1","kind":"AssistantMessage","data":{"message_id":"m-A-02","content":[{"kind":"text","data":"Reading the callback handler first."}]}}
+{"version":"v1","kind":"ToolResults","data":{"message_id":"m-A-03","content":[{"kind":"text","data":"read src/auth/callback.ts"}],"results":[{"tool":"fs_read","status":"ok"}]}}
+{"version":"v1","kind":"Prompt","data":{"message_id":"m-A-04","content":[{"kind":"text","data":"Keep the returnTo param when the session cookie is missing."}],"meta":{"timestamp":"2026-01-08T10:06:00Z"}}}
+{"version":"v1","kind":"AssistantMessage","data":{"message_id":"m-A-05","content":[{"kind":"text","data":"Patched callback.ts to preserve returnTo."}]}}

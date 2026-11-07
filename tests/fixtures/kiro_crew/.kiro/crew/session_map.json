@@ -1,0 +1,5 @@
+{
+  "dashboard:chat-1-1767866400": {"sid": "5c6d7e8f-3333-4c5d-8e6f-000000000011", "slack_thread_ts": null, "slack_channel_id": null, "provider": "acp", "cwd": "/Users/fixture/work/gamma-web"},
+  "dashboard:chat-2-1767870000": {"sid": "5c6d7e8f-3333-4c5d-8e6f-000000000012", "slack_thread_ts": null, "slack_channel_id": null, "provider": "acp", "cwd": "/Users/fixture/crew/workspace"},
+  "telegram:kirocrew:direct:100200300:gen1": {"sid": "5c6d7e8f-3333-4c5d-8e6f-000000000013", "slack_thread_ts": null, "slack_channel_id": null, "provider": "acp", "cwd": "/Users/fixture/work/alpha-app"}
+}

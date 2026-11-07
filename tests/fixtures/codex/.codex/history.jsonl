@@ -1,0 +1,3 @@
+{"session_id":"019c0001-aaaa-7bbb-8ccc-000000000001","text":"Add exponential backoff to the uploader retry loop.","ts":1793989698}
+{"session_id":"019c0001-aaaa-7bbb-8ccc-000000000001","text":"Also add a unit test for the backoff curve.","ts":1793989870}
+{"session_id":"019c0002-bbbb-7bbb-8ccc-000000000002","text":"Why does the nightly export skip empty folders?","ts":1793989925}

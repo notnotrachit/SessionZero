@@ -1,0 +1,53 @@
+{
+  "home": "tests/fixtures/kiro_crew",
+  "note": "Synthetic fake HOME at tests/fixtures/kiro_crew/.kiro/crew. Field names follow docs/formats/kiro_crew.md. Ids, paths and text are invented. message_count counts only user and assistant lines. last_active = header last_user_at when present, else the last user/assistant ts. live = stem listed in open_slots.json keys. No sessions/.index/session_index.db fixture is included; it is a binary SQLite file and is not generated here.",
+  "sessions": [
+    {
+      "id": "dashboard_chat-1-1767866400",
+      "title": "Plan retry policy",
+      "project": "/Users/fixture/work/gamma-web",
+      "folder_id": "fld_fixture_ops",
+      "created": "2026-01-08T10:00:00+00:00",
+      "last_active": "2026-01-08T10:20:00+00:00",
+      "message_count": 4,
+      "live": true,
+      "session_map_key": "dashboard:chat-1-1767866400",
+      "artifacts_rel_to_home": [
+        ".kiro/crew/sessions/dashboard_chat-1-1767866400.jsonl"
+      ]
+    },
+    {
+      "id": "dashboard_chat-2-1767870000",
+      "title": null,
+      "title_fallback": "Summarize yesterday's failed cron runs.",
+      "project": "/Users/fixture/crew/workspace",
+      "folder_id": null,
+      "created": "2026-01-08T11:00:00+00:00",
+      "last_active": "2026-01-08T11:05:20+00:00",
+      "message_count": 2,
+      "live": true,
+      "session_map_key": "dashboard:chat-2-1767870000",
+      "artifacts_rel_to_home": [
+        ".kiro/crew/sessions/dashboard_chat-2-1767870000.jsonl"
+      ]
+    },
+    {
+      "id": "telegram_kirocrew_direct_100200300_gen1",
+      "title": "Check deploy status",
+      "project": "/Users/fixture/work/alpha-app",
+      "folder_id": null,
+      "created": "2026-01-09T08:00:00+00:00",
+      "last_active": "2026-01-09T08:01:00+00:00",
+      "message_count": 2,
+      "live": false,
+      "session_map_key": "telegram:kirocrew:direct:100200300:gen1",
+      "artifacts_rel_to_home": [
+        ".kiro/crew/sessions/telegram_kirocrew_direct_100200300_gen1.jsonl"
+      ]
+    }
+  ],
+  "registry_files_rel_to_home": [
+    ".kiro/crew/session_map.json",
+    ".kiro/crew/open_slots.json"
+  ]
+}

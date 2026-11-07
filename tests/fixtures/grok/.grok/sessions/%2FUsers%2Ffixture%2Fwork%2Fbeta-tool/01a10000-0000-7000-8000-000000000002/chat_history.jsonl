@@ -1,0 +1,2 @@
+{"type": "user", "content": "Write CLI usage docs."}
+{"type": "assistant", "content": "Added docs/usage.md with the flag table."}

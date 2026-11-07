@@ -1,0 +1,318 @@
+{
+  "home": "tests/fixtures/opencode",
+  "note": "Synthetic fake HOME. Schema copied from the real opencode.db sqlite_master minus credential/account/control_account tables. Storage JSON tree is the legacy layout; snapshot/ holds placeholder HEAD/config only (real snapshot dirs are git object stores).",
+  "sessions": [
+    {
+      "id": "ses_fixture0001",
+      "title": "Fix login redirect loop",
+      "project": {
+        "id": "proj_fixture_a",
+        "worktree": "/Users/fixture/work/alpha-app"
+      },
+      "parent_id": null,
+      "archived": false,
+      "created": "2026-01-08T00:00:00.000Z",
+      "created_ms": 1767830400000,
+      "last_active": "2026-01-08T00:10:00.000Z",
+      "last_active_ms": 1767831000000,
+      "message_count": 4,
+      "db_rows_delete_order": [
+        [
+          "event",
+          "aggregate_id",
+          "ses_fixture0001"
+        ],
+        [
+          "event_sequence",
+          "aggregate_id",
+          "ses_fixture0001"
+        ],
+        [
+          "part",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "message",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "todo",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "session_message",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "session_share",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "session_inbox",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "session_pending",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "instruction_entry",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "instruction_state",
+          "session_id",
+          "ses_fixture0001"
+        ],
+        [
+          "session_v2",
+          "id",
+          "ses_fixture0001"
+        ],
+        [
+          "session",
+          "id",
+          "ses_fixture0001"
+        ]
+      ],
+      "db_bytes": {
+        "part": 1099,
+        "message": 894,
+        "session_message": 407,
+        "total": 2400
+      },
+      "legacy_files": [
+        ".local/share/opencode/storage/message/ses_fixture0001/msg_0001_00.json",
+        ".local/share/opencode/storage/message/ses_fixture0001/msg_0001_01.json",
+        ".local/share/opencode/storage/message/ses_fixture0001/msg_0001_02.json",
+        ".local/share/opencode/storage/message/ses_fixture0001/msg_0001_03.json",
+        ".local/share/opencode/storage/part/msg_0001_00/prt_msg_0001_00_0.json",
+        ".local/share/opencode/storage/part/msg_0001_01/prt_msg_0001_01_0.json",
+        ".local/share/opencode/storage/part/msg_0001_01/prt_msg_0001_01_1.json",
+        ".local/share/opencode/storage/part/msg_0001_01/prt_msg_0001_01_2.json",
+        ".local/share/opencode/storage/part/msg_0001_01/prt_msg_0001_01_3.json",
+        ".local/share/opencode/storage/part/msg_0001_02/prt_msg_0001_02_0.json",
+        ".local/share/opencode/storage/part/msg_0001_03/prt_msg_0001_03_0.json",
+        ".local/share/opencode/storage/part/msg_0001_03/prt_msg_0001_03_1.json",
+        ".local/share/opencode/storage/part/msg_0001_03/prt_msg_0001_03_2.json",
+        ".local/share/opencode/storage/session/proj_fixture_a/ses_fixture0001.json",
+        ".local/share/opencode/storage/session_diff/ses_fixture0001.json",
+        ".local/share/opencode/storage/todo/ses_fixture0001.json"
+      ],
+      "legacy_file_bytes": 3467,
+      "child_session_ids": [
+        "ses_fixture0002"
+      ]
+    },
+    {
+      "id": "ses_fixture0002",
+      "title": "Explore upload module (subagent)",
+      "project": {
+        "id": "proj_fixture_a",
+        "worktree": "/Users/fixture/work/alpha-app"
+      },
+      "parent_id": "ses_fixture0001",
+      "archived": false,
+      "created": "2026-01-08T00:01:00.000Z",
+      "created_ms": 1767830460000,
+      "last_active": "2026-01-08T00:04:00.000Z",
+      "last_active_ms": 1767830640000,
+      "message_count": 2,
+      "db_rows_delete_order": [
+        [
+          "event",
+          "aggregate_id",
+          "ses_fixture0002"
+        ],
+        [
+          "event_sequence",
+          "aggregate_id",
+          "ses_fixture0002"
+        ],
+        [
+          "part",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "message",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "todo",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "session_message",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "session_share",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "session_inbox",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "session_pending",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "instruction_entry",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "instruction_state",
+          "session_id",
+          "ses_fixture0002"
+        ],
+        [
+          "session_v2",
+          "id",
+          "ses_fixture0002"
+        ],
+        [
+          "session",
+          "id",
+          "ses_fixture0002"
+        ]
+      ],
+      "db_bytes": {
+        "part": 441,
+        "message": 447,
+        "session_message": 208,
+        "total": 1096
+      },
+      "legacy_files": [
+        ".local/share/opencode/storage/message/ses_fixture0002/msg_0002_00.json",
+        ".local/share/opencode/storage/message/ses_fixture0002/msg_0002_01.json",
+        ".local/share/opencode/storage/part/msg_0002_00/prt_msg_0002_00_0.json",
+        ".local/share/opencode/storage/part/msg_0002_01/prt_msg_0002_01_0.json",
+        ".local/share/opencode/storage/part/msg_0002_01/prt_msg_0002_01_1.json",
+        ".local/share/opencode/storage/part/msg_0002_01/prt_msg_0002_01_2.json",
+        ".local/share/opencode/storage/session/proj_fixture_a/ses_fixture0002.json"
+      ],
+      "legacy_file_bytes": 1632,
+      "child_session_ids": []
+    },
+    {
+      "id": "ses_fixture0003",
+      "title": "Document CLI flags",
+      "project": {
+        "id": "proj_fixture_b",
+        "worktree": "/Users/fixture/work/beta-tool"
+      },
+      "parent_id": null,
+      "archived": true,
+      "created": "2026-01-08T00:15:00.000Z",
+      "created_ms": 1767831300000,
+      "last_active": "2026-01-08T00:25:00.000Z",
+      "last_active_ms": 1767831900000,
+      "message_count": 2,
+      "db_rows_delete_order": [
+        [
+          "event",
+          "aggregate_id",
+          "ses_fixture0003"
+        ],
+        [
+          "event_sequence",
+          "aggregate_id",
+          "ses_fixture0003"
+        ],
+        [
+          "part",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "message",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "todo",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "session_message",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "session_share",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "session_inbox",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "session_pending",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "instruction_entry",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "instruction_state",
+          "session_id",
+          "ses_fixture0003"
+        ],
+        [
+          "session_v2",
+          "id",
+          "ses_fixture0003"
+        ],
+        [
+          "session",
+          "id",
+          "ses_fixture0003"
+        ]
+      ],
+      "db_bytes": {
+        "part": 418,
+        "message": 447,
+        "session_message": 185,
+        "total": 1050
+      },
+      "legacy_files": [
+        ".local/share/opencode/storage/message/ses_fixture0003/msg_0003_00.json",
+        ".local/share/opencode/storage/message/ses_fixture0003/msg_0003_01.json",
+        ".local/share/opencode/storage/part/msg_0003_00/prt_msg_0003_00_0.json",
+        ".local/share/opencode/storage/part/msg_0003_01/prt_msg_0003_01_0.json",
+        ".local/share/opencode/storage/part/msg_0003_01/prt_msg_0003_01_1.json",
+        ".local/share/opencode/storage/part/msg_0003_01/prt_msg_0003_01_2.json",
+        ".local/share/opencode/storage/session/proj_fixture_b/ses_fixture0003.json"
+      ],
+      "legacy_file_bytes": 1563,
+      "child_session_ids": []
+    }
+  ],
+  "project_ids": [
+    "proj_fixture_a",
+    "proj_fixture_b"
+  ]
+}

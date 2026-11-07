@@ -1,0 +1,64 @@
+{
+  "home": "tests/fixtures/kiro_cli",
+  "note": "Synthetic fake HOME at tests/fixtures/kiro_cli/.kiro. Field names follow docs/formats/kiro_cli.md. CLI store: sessions/cli/<uuid>.{json,jsonl}. Agent-mode store: sessions/<wshash>/sess_<uuid>/ with session-index and workspace-roots. Ids, paths and text are invented. message_count = Prompt+AssistantMessage for CLI, user+assistant for agent-mode. last_active = updated_at (CLI) or lastModifiedAt (agent-mode).",
+  "sessions": [
+    {
+      "store": "cli",
+      "id": "0a1b2c3d-1111-4a2b-8c3d-000000000001",
+      "title": "Fix login redirect loop",
+      "project": "/Users/fixture/work/alpha-app",
+      "parent_id": null,
+      "created": "2026-01-08T10:00:00.000000Z",
+      "last_active": "2026-01-08T10:07:00.000000Z",
+      "message_count": 4,
+      "lock": {"pid": 4242421, "alive": false},
+      "artifacts_rel_to_home": [
+        ".kiro/sessions/cli/0a1b2c3d-1111-4a2b-8c3d-000000000001.json",
+        ".kiro/sessions/cli/0a1b2c3d-1111-4a2b-8c3d-000000000001.jsonl",
+        ".kiro/sessions/cli/0a1b2c3d-1111-4a2b-8c3d-000000000001.lock",
+        ".kiro/sessions/cli/0a1b2c3d-1111-4a2b-8c3d-000000000001.history",
+        ".kiro/sessions/cli/0a1b2c3d-1111-4a2b-8c3d-000000000001/tasks/t1.json"
+      ],
+      "index_files_rel_to_home": []
+    },
+    {
+      "store": "cli",
+      "id": "0a1b2c3d-1111-4a2b-8c3d-000000000002",
+      "title": null,
+      "title_fallback": "Check the cookie settings in the auth config.",
+      "project": "/",
+      "parent_id": "0a1b2c3d-1111-4a2b-8c3d-000000000001",
+      "created": "2026-01-08T10:02:00.000000Z",
+      "last_active": "2026-01-08T10:03:00.000000Z",
+      "message_count": 2,
+      "lock": null,
+      "artifacts_rel_to_home": [
+        ".kiro/sessions/cli/0a1b2c3d-1111-4a2b-8c3d-000000000002.json",
+        ".kiro/sessions/cli/0a1b2c3d-1111-4a2b-8c3d-000000000002.jsonl"
+      ],
+      "index_files_rel_to_home": []
+    },
+    {
+      "store": "agent",
+      "id": "sess_2b3c4d5e-2222-4b3c-9d4e-000000000003",
+      "title": "Add retry to uploader",
+      "project": "/Users/fixture/work/beta-api",
+      "parent_id": null,
+      "created": "2026-01-08T11:00:00.000Z",
+      "last_active": "2026-01-08T11:04:00.000Z",
+      "message_count": 4,
+      "workspace_hash": "3f9c2a1b7d4e8f60",
+      "lock": null,
+      "artifacts_rel_to_home": [
+        ".kiro/sessions/3f9c2a1b7d4e8f60/sess_2b3c4d5e-2222-4b3c-9d4e-000000000003/session.json",
+        ".kiro/sessions/3f9c2a1b7d4e8f60/sess_2b3c4d5e-2222-4b3c-9d4e-000000000003/messages.jsonl"
+      ],
+      "index_files_rel_to_home": [
+        ".kiro/session-index/3f9c2a1b7d4e8f60.jsonl"
+      ]
+    }
+  ],
+  "workspace_roots_rel_to_home": [
+    ".kiro/workspace-roots/3f9c2a1b7d4e8f60/permissions.yaml"
+  ]
+}

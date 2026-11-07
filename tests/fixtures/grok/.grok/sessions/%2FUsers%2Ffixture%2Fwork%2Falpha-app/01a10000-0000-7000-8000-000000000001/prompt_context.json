@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "prompt_mode": "default",
+  "working_directory": "/Users/fixture/work/alpha-app",
+  "current_date": "2026-02-01",
+  "memory_enabled": false,
+  "system_prompt_label": "fixture"
+}

@@ -1,0 +1,53 @@
+{
+  "_about": "Expected parse results for the synthetic Claude Code fixture home at tests/fixtures/claude. Paths in artifacts are relative to this fixture home. index_refs lists shared index rows that must be updated on delete. Rules are in docs/formats/claude.md. session-env directories are not modelled in this fixture.",
+  "sessions": [
+    {
+      "id": "5f1c0a01-1a2b-4c3d-8e9f-000000000001",
+      "title": "Parser module rename",
+      "title_source": "sessions-index summary",
+      "project": "/Users/test/proj",
+      "created": "2026-11-04T14:00:00.000Z",
+      "last_active": "2026-11-04T14:06:02.250Z",
+      "message_count": 4,
+      "artifacts": [
+        ".claude/projects/-Users-test-proj/5f1c0a01-1a2b-4c3d-8e9f-000000000001.jsonl",
+        ".claude/projects/-Users-test-proj/5f1c0a01-1a2b-4c3d-8e9f-000000000001.jsonl.wakatime"
+      ],
+      "index_refs": {
+        ".claude/projects/-Users-test-proj/sessions-index.json": 1,
+        ".claude/history.jsonl": 2
+      }
+    },
+    {
+      "id": "5f1c0a02-2b3c-4d5e-9f01-000000000002",
+      "title": "Add a CHANGELOG entry for 0.4.0.",
+      "title_source": "first user record (no sessions-index entry)",
+      "project": "/Users/test/proj",
+      "created": "2026-11-05T09:30:00.000Z",
+      "last_active": "2026-11-05T09:31:15.900Z",
+      "message_count": 2,
+      "artifacts": [
+        ".claude/projects/-Users-test-proj/5f1c0a02-2b3c-4d5e-9f01-000000000002.jsonl"
+      ],
+      "index_refs": {
+        ".claude/projects/-Users-test-proj/sessions-index.json": 0,
+        ".claude/history.jsonl": 1
+      }
+    },
+    {
+      "id": "5f1c0a03-3c4d-4e5f-8a12-000000000003",
+      "title": "Summarize the notes in scratch.txt.",
+      "title_source": "first user record (no sessions-index entry)",
+      "project": null,
+      "created": "2026-11-06T16:20:00.000Z",
+      "last_active": "2026-11-06T16:20:40.120Z",
+      "message_count": 2,
+      "artifacts": [
+        ".claude/projects/-Users-test-scratch/5f1c0a03-3c4d-4e5f-8a12-000000000003.jsonl"
+      ],
+      "index_refs": {
+        ".claude/history.jsonl": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "home": "tests/fixtures/grok",
+  "note": "Synthetic fake HOME at tests/fixtures/grok/.grok. Session dirs follow sessions/<urlencoded cwd>/<session id>/. Subagent children live under <parent>/subagents/<child id>/ with meta.json and output.json only. session_search.sqlite is a derived FTS index (schema copied from the real file; rows only for sessions without session_kind). active_sessions.json lists G2 with pid 4242424, which is not alive in this fixture.",
+  "sessions": [
+    {
+      "id": "01a10000-0000-7000-8000-000000000001",
+      "title": "Refactor config loader",
+      "project": "/Users/fixture/work/alpha-app",
+      "created": "2026-02-01T10:00:00.000000Z",
+      "last_active": "2026-02-01T10:20:00.000000Z",
+      "message_count": 6,
+      "num_messages_raw": 9,
+      "chat_message_count": 6,
+      "session_kind": null,
+      "parent_session_id": null,
+      "running": false,
+      "artifacts_rel_to_home": [
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/chat_history.jsonl",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/events.jsonl",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/prompt_context.json",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/rewind_points.jsonl",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/signals.json",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/subagents/01a10000-0000-7000-8000-0000000000a1/meta.json",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/subagents/01a10000-0000-7000-8000-0000000000a1/output.json",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/summary.json",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/system_prompt.txt",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/terminal/call-11111111-2222-3333-4444-555555555555-1.log",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/tool_definitions.json",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/updates.jsonl",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/usage.json"
+      ],
+      "dir_bytes": 3931,
+      "index_rows": [
+        [
+          "session_docs",
+          "session_id",
+          "01a10000-0000-7000-8000-000000000001"
+        ]
+      ],
+      "subagent_child_ids": [
+        "01a10000-0000-7000-8000-0000000000a1"
+      ]
+    },
+    {
+      "id": "01a10000-0000-7000-8000-000000000002",
+      "title": "Write CLI usage docs",
+      "project": "/Users/fixture/work/beta-tool",
+      "created": "2026-02-03T09:00:00.000000Z",
+      "last_active": "2026-02-03T09:12:00.000000Z",
+      "message_count": 2,
+      "num_messages_raw": 2,
+      "chat_message_count": 2,
+      "session_kind": null,
+      "parent_session_id": null,
+      "running": false,
+      "artifacts_rel_to_home": [
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Fbeta-tool/01a10000-0000-7000-8000-000000000002/chat_history.jsonl",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Fbeta-tool/01a10000-0000-7000-8000-000000000002/events.jsonl",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Fbeta-tool/01a10000-0000-7000-8000-000000000002/summary.json",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Fbeta-tool/01a10000-0000-7000-8000-000000000002/usage.json"
+      ],
+      "dir_bytes": 1920,
+      "index_rows": [
+        [
+          "session_docs",
+          "session_id",
+          "01a10000-0000-7000-8000-000000000002"
+        ]
+      ],
+      "subagent_child_ids": []
+    },
+    {
+      "id": "01a10000-0000-7000-8000-000000000003",
+      "title": "Explore config readers (resume)",
+      "project": "/Users/fixture/.grok/worktrees/alpha-app/subagent-01a10000-0000-7000-8000-000000000001",
+      "created": "2026-02-01T10:05:00.000000Z",
+      "last_active": "2026-02-01T10:08:00.000000Z",
+      "message_count": 2,
+      "num_messages_raw": 2,
+      "chat_message_count": 2,
+      "session_kind": "subagent_resume",
+      "parent_session_id": "01a10000-0000-7000-8000-000000000001",
+      "running": false,
+      "artifacts_rel_to_home": [
+        ".grok/sessions/%2FUsers%2Ffixture%2F.grok%2Fworktrees%2Falpha-app%2Fsubagent-01a10000-0000-7000-8000-000000000001/01a10000-0000-7000-8000-000000000003/chat_history.jsonl",
+        ".grok/sessions/%2FUsers%2Ffixture%2F.grok%2Fworktrees%2Falpha-app%2Fsubagent-01a10000-0000-7000-8000-000000000001/01a10000-0000-7000-8000-000000000003/events.jsonl",
+        ".grok/sessions/%2FUsers%2Ffixture%2F.grok%2Fworktrees%2Falpha-app%2Fsubagent-01a10000-0000-7000-8000-000000000001/01a10000-0000-7000-8000-000000000003/summary.json"
+      ],
+      "dir_bytes": 1341,
+      "index_rows": [],
+      "subagent_child_ids": []
+    }
+  ],
+  "subagent_children": [
+    {
+      "id": "01a10000-0000-7000-8000-0000000000a1",
+      "parent_session_id": "01a10000-0000-7000-8000-000000000001",
+      "subagent_type": "explore",
+      "status": "completed",
+      "dir": ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/subagents/01a10000-0000-7000-8000-0000000000a1",
+      "artifacts_rel_to_home": [
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/subagents/01a10000-0000-7000-8000-0000000000a1/meta.json",
+        ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/subagents/01a10000-0000-7000-8000-0000000000a1/output.json"
+      ]
+    }
+  ],
+  "shared_bucket_files": [
+    {
+      "path": ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/prompt_history.jsonl",
+      "note": "shared across sessions in this bucket; filter lines by session_id, do not delete the file"
+    }
+  ],
+  "root_files": [
+    ".grok/active_sessions.json",
+    ".grok/sessions/session_search.sqlite"
+  ]
+}

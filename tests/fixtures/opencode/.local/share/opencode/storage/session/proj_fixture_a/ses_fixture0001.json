@@ -1,0 +1,12 @@
+{
+  "id": "ses_fixture0001",
+  "slug": "calm-river",
+  "version": "1.1.61",
+  "projectID": "proj_fixture_a",
+  "directory": "/Users/fixture/work/alpha-app",
+  "title": "Fix login redirect loop",
+  "time": {
+    "created": 1767830400000,
+    "updated": 1767831000000
+  }
+}

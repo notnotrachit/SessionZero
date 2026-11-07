@@ -1,0 +1,6 @@
+{"type": "user", "content": "Refactor the config loader to read TOML."}
+{"type": "tool_result", "content": "(fixture tool output)"}
+{"type": "assistant", "content": "Moved parsing into config/load.py and kept the YAML path as a fallback."}
+{"type": "user", "content": "Run the config tests."}
+{"type": "tool_result", "content": "(fixture tool output)"}
+{"type": "assistant", "content": "All 12 config tests pass."}

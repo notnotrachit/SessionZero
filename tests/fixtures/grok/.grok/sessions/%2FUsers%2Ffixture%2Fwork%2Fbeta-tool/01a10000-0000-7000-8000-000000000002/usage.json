@@ -1,0 +1,34 @@
+{
+  "sessionId": "01a10000-0000-7000-8000-000000000002",
+  "updatedAt": "2026-02-03T09:12:00.000000Z",
+  "session": {
+    "inputTokens": 1200,
+    "outputTokens": 340,
+    "cachedReadTokens": 0,
+    "cacheCreationTokens": 0,
+    "reasoningTokens": 0,
+    "totalTokens": 1540,
+    "modelCalls": 1,
+    "costUsdTicks": 0,
+    "turnCount": 1,
+    "primaryModelId": "example-model",
+    "modelUsage": {}
+  },
+  "turns": [
+    {
+      "turnNumber": 1,
+      "endedAt": "2026-02-03T09:12:00.000000Z",
+      "inputTokens": 1200,
+      "outputTokens": 340,
+      "cachedReadTokens": 0,
+      "cacheCreationTokens": 0,
+      "reasoningTokens": 0,
+      "totalTokens": 1540,
+      "modelCalls": 1,
+      "costUsdTicks": 0,
+      "turnCount": 1,
+      "primaryModelId": "example-model",
+      "modelUsage": {}
+    }
+  ]
+}

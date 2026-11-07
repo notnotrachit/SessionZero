@@ -1,0 +1,8 @@
+{
+  "turnCount": 1,
+  "userMessageCount": 2,
+  "assistantMessageCount": 2,
+  "toolCallCount": 2,
+  "sessionDurationSeconds": 1200,
+  "primaryModelId": "example-model"
+}

@@ -1,0 +1,6 @@
+{"role":"user","message":{"content":[{"type":"text","text":"fixture request alpha"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"fixture reply alpha"},{"type":"tool_use","name":"Read","input":{"path":"/Users/fixture/work/alpha-app/README.md"}}]}}
+{"type":"turn_ended","status":"success"}
+{"role":"user","message":{"content":[{"type":"text","text":"fixture follow up"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"fixture final reply"},{"type":"tool_use","name":"Subagent","input":{"description":"fixture child task"}}]}}
+{"type":"turn_ended","status":"success"}

@@ -1,0 +1,90 @@
+{
+  "home": "tests/fixtures/cursor",
+  "note": "Synthetic fake HOME. Three sessions: two agent transcripts under ~/.cursor/projects/<slug>/agent-transcripts/ (one with a subagent child) and one composer in globalStorage state.vscdb. Transcript JSONL has no timestamps, so created is null and last_active is the file mtime. The fixture sets mtimes with touch -t (202602011020 for T1, 202602011005 for its subagent, 202602030912 for T2); a checkout resets mtimes, so tests must set them first. ai-code-tracking.db is a shared analytics DB and must not be edited when a session is removed. Changed in the adapter pass: T1 owns its whole agent-transcripts/<id>/ directory (main file plus subagents/), so its bytes are 608 + 282 = 890, and the subagent is listed separately. Beta's project is null: the slug Users-fixture-work-beta-tool cannot be resolved from the fixture (no workspace.json, no absolute path in the transcript, and /Users/fixture does not exist on disk), so it is not guessed.",
+  "sessions": [
+    {
+      "kind": "agent-transcript",
+      "id": "aaaaaaaa-0001-4000-8000-000000000001",
+      "title": "fixture request alpha",
+      "title_source": "first user text block (no title stored)",
+      "project": "/Users/fixture/work/alpha-app",
+      "project_source": "workspace.json folder for slug Users-fixture-work-alpha-app; the transcript's Read path /Users/fixture/work/alpha-app/README.md also resolves to it",
+      "created": null,
+      "created_note": "no timestamp in JSONL; birth time is not portable",
+      "last_active": "2026-02-01T10:20:00.000Z",
+      "last_active_source": "mtime of the main .jsonl",
+      "message_count": 4,
+      "message_count_note": "role records only; {type: turn_ended} status lines are excluded",
+      "running": false,
+      "artifacts_rel_to_home": [
+        ".cursor/projects/Users-fixture-work-alpha-app/agent-transcripts/aaaaaaaa-0001-4000-8000-000000000001/"
+      ],
+      "child_session_ids": [
+        "aaaaaaaa-0002-4000-8000-000000000002"
+      ],
+      "dir_bytes": 890,
+      "dir_bytes_note": "whole agent-transcripts/<id>/ directory: main 608 + subagents/*.jsonl 282",
+      "parent_session_id": null
+    },
+    {
+      "kind": "agent-transcript-subagent",
+      "id": "aaaaaaaa-0002-4000-8000-000000000002",
+      "title": "fixture child prompt",
+      "title_source": "first user text block (no title stored)",
+      "project": "/Users/fixture/work/alpha-app",
+      "project_source": "workspace.json folder for slug Users-fixture-work-alpha-app",
+      "created": null,
+      "last_active": "2026-02-01T10:05:00.000Z",
+      "last_active_source": "mtime of the subagent .jsonl",
+      "message_count": 2,
+      "running": false,
+      "artifacts_rel_to_home": [
+        ".cursor/projects/Users-fixture-work-alpha-app/agent-transcripts/aaaaaaaa-0001-4000-8000-000000000001/subagents/aaaaaaaa-0002-4000-8000-000000000002.jsonl"
+      ],
+      "dir_bytes": 282,
+      "parent_session_id": "aaaaaaaa-0001-4000-8000-000000000001"
+    },
+    {
+      "kind": "agent-transcript",
+      "id": "aaaaaaaa-0003-4000-8000-000000000003",
+      "title": "fixture beta request",
+      "title_source": "first user text block (no title stored)",
+      "project": null,
+      "project_source": "unresolved: slug Users-fixture-work-beta-tool has no workspace.json folder, no absolute path in the transcript, and no existing /Users/fixture directory on disk",
+      "created": null,
+      "last_active": "2026-02-03T09:12:00.000Z",
+      "last_active_source": "mtime of the main .jsonl",
+      "message_count": 2,
+      "running": false,
+      "artifacts_rel_to_home": [
+        ".cursor/projects/Users-fixture-work-beta-tool/agent-transcripts/aaaaaaaa-0003-4000-8000-000000000003/"
+      ],
+      "dir_bytes": 264,
+      "parent_session_id": null
+    },
+    {
+      "kind": "composer",
+      "id": "c0ffee00-1111-4222-8333-000000000011",
+      "title": "fixture composer question",
+      "title_source": "first user bubble text (no name field in fixture)",
+      "project": "/Users/fixture/work/alpha-app",
+      "project_source": "composerHeaders.workspaceId 9f8e7d6c5b4a39281706f5e4d3c2b1a0 -> workspaceStorage/<hash>/workspace.json",
+      "created": "2026-02-01T10:00:00.000Z",
+      "created_source": "composerData createdAt 1769940000000 ms",
+      "last_active": "2026-02-01T10:10:00.000Z",
+      "last_active_source": "composerHeaders.lastUpdatedAt 1769940600000 ms",
+      "message_count": 2,
+      "running": false,
+      "artifacts_rel_to_home": [
+        "Library/Application Support/Cursor/User/globalStorage/state.vscdb (DbRows: cursorDiskKV key composerData:c0ffee00-1111-4222-8333-000000000011 and composerHeaders row composerId = c0ffee00-1111-4222-8333-000000000011; DbPrefix: cursorDiskKV key prefix bubbleId:c0ffee00-1111-4222-8333-000000000011:, 2 rows)"
+      ],
+      "shared_artifacts_rel_to_home": [
+        "Library/Application Support/Cursor/User/workspaceStorage/9f8e7d6c5b4a39281706f5e4d3c2b1a0/workspace.json (mapping only; never delete)",
+        ".cursor/ai-tracking/ai-code-tracking.db (ai_code_hashes row with conversationId = c0ffee00-1111-4222-8333-000000000011; shared analytics, do not delete)"
+      ],
+      "dir_bytes": null,
+      "dir_bytes_note": "SQLite rows, not files. Row value lengths: composerData 604, composerHeaders 382, bubbles 109 and 107 (total 1202)",
+      "parent_session_id": null
+    }
+  ]
+}
