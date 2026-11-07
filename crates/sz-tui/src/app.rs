@@ -1769,7 +1769,7 @@ mod tests {
         ));
     }
 
-    /// Real home, read-only. Run with `cargo test -p sz-tui snapshot_real_home -- --ignored --nocapture`.
+    /// Real home, read-only. Run with `cargo test -p sessionzero snapshot_real_home -- --ignored --nocapture`.
     /// Writes the two 120x40 frames to `$KIROCREW_SCRATCH/sz-list.txt` and `sz-analyze.txt`.
     #[test]
     #[ignore]

@@ -24,11 +24,24 @@ Agent aliases also work: `claude-code`, `kiro-cli`, `kiro_crew`, `crew`, `open-c
 
 ## Install
 
+Pick one. Each one installs the `sz` binary. Run `sz` with no arguments to open the TUI menu.
+
 ```sh
-cargo install --path crates/sz-tui
+# Homebrew (macOS and Linux)
+brew install notnotrachit/tap/sessionzero
+
+# npm: runs once without installing, or installs globally
+npx sessionzero
+npm i -g sessionzero
+
+# Shell installer (macOS and Linux)
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/notnotrachit/SessionZero/releases/latest/download/sessionzero-installer.sh | sh
+
+# From source
+cargo install --git https://github.com/notnotrachit/SessionZero sessionzero
 ```
 
-This installs the `sz` binary. Run `sz` with no arguments to open the TUI menu.
+The npm package downloads the prebuilt binary for your platform from the GitHub release. Building from a local checkout also works: `cargo install --path crates/sz-tui`.
 
 ## Usage
 
@@ -167,3 +180,20 @@ cargo clippy --workspace --all-targets
 - Live tests that read your real home directory are marked `#[ignore]` and skipped by default. The adapter `live_scan` tests only read. Run them on purpose with `cargo test -- --ignored`. The TUI `snapshot_real_home` test writes its output under `$KIROCREW_SCRATCH` (or `/tmp`).
 - Layout: `crates/sz-core` is the engine (adapters, scan, group, rules, cache, trash). `crates/sz-tui` is the `sz` binary (CLI in `cli.rs`, TUI in `app.rs` and `ui.rs`).
 - Format notes for each agent are in `docs/formats/`. The engine API is in `docs/core-api.md`, and the TUI spec is in `docs/tui-spec.md`.
+
+## Release (maintainers)
+
+Releases are built by [cargo-dist](https://axodotdev.github.io/cargo-dist/) from `.github/workflows/release.yml`, which `dist generate` writes from `dist-workspace.toml`. Pushing a version tag builds the binaries for macOS and Linux, creates a GitHub release, and publishes the Homebrew formula and npm package.
+
+Repository secrets needed:
+
+- `HOMEBREW_TAP_TOKEN`: fine-grained personal access token with contents write access to `notnotrachit/homebrew-tap`.
+- `NPM_TOKEN`: npm automation token that can publish `sessionzero`.
+
+Release:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+After changing `dist-workspace.toml`, run `dist generate` and commit the regenerated workflow. Run `dist plan` to see what a release will produce.

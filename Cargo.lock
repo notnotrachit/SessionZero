@@ -970,6 +970,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sessionzero"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "crossterm",
+ "dirs",
+ "ratatui",
+ "regex",
+ "serde",
+ "serde_json",
+ "sz-core",
+ "tempfile",
+]
+
+[[package]]
 name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1107,23 +1124,6 @@ dependencies = [
  "thiserror",
  "walkdir",
  "zstd",
-]
-
-[[package]]
-name = "sz-tui"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "crossterm",
- "dirs",
- "ratatui",
- "regex",
- "serde",
- "serde_json",
- "sz-core",
- "tempfile",
 ]
 
 [[package]]

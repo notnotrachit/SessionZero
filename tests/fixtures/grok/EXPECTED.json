@@ -29,7 +29,7 @@
         ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/updates.jsonl",
         ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Falpha-app/01a10000-0000-7000-8000-000000000001/usage.json"
       ],
-      "dir_bytes": 3931,
+      "dir_bytes": 3874,
       "index_rows": [
         [
           "session_docs",
@@ -59,7 +59,7 @@
         ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Fbeta-tool/01a10000-0000-7000-8000-000000000002/summary.json",
         ".grok/sessions/%2FUsers%2Ffixture%2Fwork%2Fbeta-tool/01a10000-0000-7000-8000-000000000002/usage.json"
       ],
-      "dir_bytes": 1920,
+      "dir_bytes": 1863,
       "index_rows": [
         [
           "session_docs",
@@ -86,7 +86,7 @@
         ".grok/sessions/%2FUsers%2Ffixture%2F.grok%2Fworktrees%2Falpha-app%2Fsubagent-01a10000-0000-7000-8000-000000000001/01a10000-0000-7000-8000-000000000003/events.jsonl",
         ".grok/sessions/%2FUsers%2Ffixture%2F.grok%2Fworktrees%2Falpha-app%2Fsubagent-01a10000-0000-7000-8000-000000000001/01a10000-0000-7000-8000-000000000003/summary.json"
       ],
-      "dir_bytes": 1341,
+      "dir_bytes": 1284,
       "index_rows": [],
       "subagent_child_ids": []
     }
