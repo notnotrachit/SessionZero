@@ -113,12 +113,162 @@ pub enum JobResult {
         children: usize,
     },
     Deleted(Result<TrashEntry, String>),
-    Restored { id: String, result: Result<(), String> },
-    Emptied(Result<u64, String>),
+    /// `bytes` is the size of the entry being restored, read before the restore started.
+    Restored {
+        id: String,
+        bytes: u64,
+        result: Result<(), String>,
+    },
+    /// `count` is how many entries the empty removed, counted before it ran.
+    Emptied {
+        count: usize,
+        result: Result<u64, String>,
+    },
     Preview { key: String, result: Result<Vec<PreviewMsg>, String> },
     /// The startup auto-delete pass removed entries. Only sent when it removed something.
     AutoPurged { report: PurgeReport, days: u32 },
+    /// The startup auto-delete pass failed.
+    PurgeFailed(String),
     Info(String),
+}
+
+/// Trash contents at exit, shown in the session summary.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TrashNow {
+    pub entries: usize,
+    pub bytes: u64,
+    /// 0 keeps entries forever.
+    pub retention_days: u32,
+    /// Whole days until the oldest entry is auto-deleted. `None` when the trash is empty.
+    pub days_until_next: Option<i64>,
+}
+
+/// What this TUI session did to disk. Filled in as results arrive on the UI thread, then printed
+/// after the terminal is restored on exit.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct SessionStats {
+    pub moved_sessions: usize,
+    pub moved_bytes: u64,
+    pub moved_entries: usize,
+    pub restored_entries: usize,
+    pub restored_bytes: u64,
+    pub emptied_entries: usize,
+    pub emptied_bytes: u64,
+    pub purged_entries: usize,
+    pub purged_bytes: u64,
+    pub error_count: usize,
+    /// The first error message, untruncated. Truncated when rendered.
+    pub first_error: Option<String>,
+    /// Trash contents at exit. Read from disk only when something changed.
+    pub trash_now: Option<TrashNow>,
+}
+
+const SUMMARY_ERROR_CHARS: usize = 120;
+const TRASH_NOTE: &str = "Space is freed when you empty the trash.";
+
+impl SessionStats {
+    /// True when at least one entry was moved, restored, emptied or auto-deleted.
+    pub fn has_disk_change(&self) -> bool {
+        self.moved_entries > 0
+            || self.restored_entries > 0
+            || self.emptied_entries > 0
+            || self.purged_entries > 0
+    }
+
+    pub fn record_error(&mut self, msg: impl Into<String>) {
+        self.error_count += 1;
+        if self.first_error.is_none() {
+            self.first_error = Some(msg.into());
+        }
+    }
+
+    /// Summary lines for stdout. Empty when this session changed nothing on disk.
+    pub fn render_lines(&self) -> Vec<String> {
+        if !self.has_disk_change() {
+            return Vec::new();
+        }
+        let mut lines = Vec::new();
+        if self.moved_entries > 0 {
+            let not_freed = if self.moved_bytes > 0 { " (not freed yet)" } else { "" };
+            lines.push(format!(
+                "Moved to trash this session: {} ({}) in {}{not_freed}",
+                count_noun(self.moved_sessions, "session", "sessions"),
+                group::human_bytes(self.moved_bytes),
+                count_noun(self.moved_entries, "trash entry", "trash entries"),
+            ));
+        }
+        if self.restored_entries > 0 {
+            lines.push(format!(
+                "Restored from trash this session: {} ({})",
+                count_noun(self.restored_entries, "entry", "entries"),
+                group::human_bytes(self.restored_bytes),
+            ));
+        }
+        if self.emptied_entries > 0 {
+            lines.push(format!(
+                "Permanently deleted from trash this session (x / X): {}, {} freed on disk.",
+                count_noun(self.emptied_entries, "entry", "entries"),
+                group::human_bytes(self.emptied_bytes),
+            ));
+        }
+        if self.purged_entries > 0 {
+            lines.push(format!(
+                "Auto-deleted by the startup trash purge this session: {}, {} freed on disk.",
+                count_noun(self.purged_entries, "entry", "entries"),
+                group::human_bytes(self.purged_bytes),
+            ));
+        }
+        if let Some(trash) = &self.trash_now {
+            lines.push(format!("Trash now: {}", trash.describe()));
+            if self.moved_bytes > 0 {
+                lines.push(TRASH_NOTE.to_string());
+            }
+        }
+        if let Some(first) = &self.first_error {
+            lines.push(format!(
+                "Errors this session: {} (first: {})",
+                self.error_count,
+                truncate_chars(&first.replace('\n', " "), SUMMARY_ERROR_CHARS),
+            ));
+        }
+        lines
+    }
+}
+
+impl TrashNow {
+    fn describe(&self) -> String {
+        let base = format!(
+            "{}, {}",
+            count_noun(self.entries, "entry", "entries"),
+            group::human_bytes(self.bytes)
+        );
+        if self.entries == 0 {
+            base
+        } else if self.retention_days == 0 {
+            format!("{base}; kept forever")
+        } else {
+            match self.days_until_next {
+                Some(0) => format!("{base}; next auto-delete today"),
+                Some(1) => format!("{base}; next auto-delete in 1 day"),
+                Some(n) => format!("{base}; next auto-delete in {n} days"),
+                None => base,
+            }
+        }
+    }
+}
+
+fn count_noun(n: usize, one: &str, many: &str) -> String {
+    format!("{n} {}", if n == 1 { one } else { many })
+}
+
+/// Cuts `s` to at most `max` characters, ending with `...` when it was cut.
+fn truncate_chars(s: &str, max: usize) -> String {
+    if s.chars().count() <= max {
+        return s.to_string();
+    }
+    let mut out: String = s.chars().take(max - 3).collect();
+    out.push_str("...");
+    out
 }
 
 /// One line of the List or Analyze table. Group rows carry every session beneath them.
@@ -192,6 +342,8 @@ pub struct App {
     pub trash_retention_days: u32,
     /// Last delete-plan request. Replies carrying an older `seq` are dropped.
     plan_seq: u64,
+    /// Disk changes made in this session, printed on exit.
+    pub stats: SessionStats,
 
     pending: Vec<Command>,
     scan_rx: Option<Receiver<ScanEvent>>,
@@ -256,6 +408,7 @@ impl App {
             trash_entries: Vec::new(),
             trash_retention_days: config::DEFAULT_TRASH_RETENTION_DAYS,
             plan_seq: 0,
+            stats: SessionStats::default(),
             pending: Vec::new(),
             scan_rx: None,
             jobs_tx,
@@ -391,6 +544,14 @@ impl App {
                 self.modal = None;
                 let moved: HashSet<String> = entry.sessions.iter().map(|s| s.key()).collect();
                 let n = entry.sessions.len();
+                self.stats.moved_sessions += n;
+                self.stats.moved_bytes += entry.bytes;
+                if n > 0 {
+                    self.stats.moved_entries += 1;
+                }
+                for err in &entry.errors {
+                    self.stats.record_error(err.clone());
+                }
                 self.sessions.retain(|s| !moved.contains(&s.key()));
                 self.selected.retain(|k| !moved.contains(k));
                 self.refresh();
@@ -406,27 +567,47 @@ impl App {
             JobResult::Deleted(Err(e)) => {
                 self.busy = None;
                 self.modal = None;
+                self.stats.record_error(e.clone());
                 self.set_toast(format!("Delete failed: {e}"));
             }
-            JobResult::Restored { id, result: Ok(()) } => {
+            JobResult::Restored {
+                id,
+                bytes,
+                result: Ok(()),
+            } => {
                 self.busy = None;
+                self.stats.restored_entries += 1;
+                self.stats.restored_bytes += bytes;
                 self.set_toast(format!("Restored {id}. Rescanning…"));
                 if !self.scanning {
                     self.pending.push(Command::Rescan);
                 }
                 self.load_trash();
             }
-            JobResult::Restored { id, result: Err(e) } => {
+            JobResult::Restored {
+                id,
+                result: Err(e),
+                ..
+            } => {
                 self.busy = None;
+                self.stats.record_error(e.clone());
                 self.set_toast(format!("Restore {id} failed: {e}"));
             }
-            JobResult::Emptied(Ok(bytes)) => {
+            JobResult::Emptied {
+                count,
+                result: Ok(bytes),
+            } => {
                 self.busy = None;
+                self.stats.emptied_entries += count;
+                self.stats.emptied_bytes += bytes;
                 self.set_toast(format!("Trash emptied, freed {}", group::human_bytes(bytes)));
                 self.load_trash();
             }
-            JobResult::Emptied(Err(e)) => {
+            JobResult::Emptied {
+                result: Err(e), ..
+            } => {
                 self.busy = None;
+                self.stats.record_error(e.clone());
                 self.set_toast(format!("Empty failed: {e}"));
             }
             JobResult::Preview { key, result } => {
@@ -434,6 +615,8 @@ impl App {
                 self.previews.insert(key, result);
             }
             JobResult::AutoPurged { report, days } => {
+                self.stats.purged_entries += report.entries;
+                self.stats.purged_bytes += report.bytes;
                 let unit = if days == 1 { "day" } else { "days" };
                 self.set_toast(format!(
                     "Auto-deleted {} ({}) older than {days} {unit}",
@@ -446,8 +629,28 @@ impl App {
                 ));
                 self.load_trash();
             }
+            JobResult::PurgeFailed(msg) => {
+                self.stats.record_error(msg.clone());
+                self.set_toast(msg);
+            }
             JobResult::Info(msg) => self.set_toast(msg),
         }
+    }
+
+    /// Trash contents right now, for the exit summary. `None` when the trash cannot be read.
+    pub fn trash_now(&self) -> Option<TrashNow> {
+        let entries = Trash::new(self.trash_root.clone()).list().ok()?;
+        let config = Config {
+            trash_retention_days: self.trash_retention_days,
+        };
+        let now = Utc::now();
+        let oldest = entries.iter().map(|e| e.created).min();
+        Some(TrashNow {
+            entries: entries.len(),
+            bytes: entries.iter().map(|e| e.bytes).sum(),
+            retention_days: self.trash_retention_days,
+            days_until_next: oldest.and_then(|t| config.days_until_purge(t, now)),
+        })
     }
 
     /// Runs the automatic trash deletion on a worker thread so startup never waits for it. The
@@ -466,7 +669,9 @@ impl App {
                 }
                 Ok(_) => {}
                 Err(e) => {
-                    let _ = tx.send(JobResult::Info(format!("Automatic trash deletion failed: {e:#}")));
+                    let _ = tx.send(JobResult::PurgeFailed(format!(
+                        "Automatic trash deletion failed: {e:#}"
+                    )));
                 }
             }
         });
@@ -513,18 +718,29 @@ impl App {
             }
             Command::Restore(id) => {
                 let root = self.trash_root.clone();
+                let bytes = self
+                    .trash_entries
+                    .iter()
+                    .find(|e| e.id == id)
+                    .map_or(0, |e| e.bytes);
                 thread::spawn(move || {
                     let result = Trash::new(root).restore(&id).map_err(|e| format!("{e:#}"));
-                    let _ = tx.send(JobResult::Restored { id, result });
+                    let _ = tx.send(JobResult::Restored { id, bytes, result });
                 });
             }
             Command::Empty(id) => {
                 let root = self.trash_root.clone();
                 thread::spawn(move || {
-                    let res = Trash::new(root)
+                    let trash = Trash::new(root);
+                    // Counted before the empty runs, since the entries are gone afterwards.
+                    let count = match id {
+                        Some(_) => 1,
+                        None => trash.list().map_or(0, |entries| entries.len()),
+                    };
+                    let result = trash
                         .empty(id.as_deref())
                         .map_err(|e| format!("{e:#}"));
-                    let _ = tx.send(JobResult::Emptied(res));
+                    let _ = tx.send(JobResult::Emptied { count, result });
                 });
             }
             Command::OpenFolder(path) => {
@@ -1295,12 +1511,25 @@ pub fn run(opts: Options, mode: Mode, background_purge: bool) -> Result<()> {
     }
     app.start_scan();
 
-    let _guard = TerminalGuard::enter()?;
+    let guard = TerminalGuard::enter()?;
+    let result = event_loop(&mut app);
+    // Restore the terminal first, so the summary lands on the normal screen.
+    drop(guard);
+    if app.stats.has_disk_change() {
+        app.stats.trash_now = app.trash_now();
+    }
+    for line in app.stats.render_lines() {
+        println!("{line}");
+    }
+    result
+}
+
+fn event_loop(app: &mut App) -> Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
     loop {
         app.tick = app.tick.wrapping_add(1);
         app.poll_background();
-        terminal.draw(|f| ui::render(f, &app))?;
+        terminal.draw(|f| ui::render(f, app))?;
         if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
                 app.on_key(key);
@@ -1308,10 +1537,9 @@ pub fn run(opts: Options, mode: Mode, background_purge: bool) -> Result<()> {
         }
         app.dispatch_pending();
         if app.should_quit() {
-            break;
+            return Ok(());
         }
     }
-    Ok(())
 }
 
 /// Scans `opts.home` synchronously and renders one frame of `mode` as plain text.
@@ -1886,5 +2114,261 @@ mod auto_purge_tests {
         let root = tempfile::tempdir().expect("tempdir");
         let app = blank_app(root.path());
         assert_eq!(app.trash_retention_days, 30);
+    }
+}
+
+#[cfg(test)]
+mod session_summary_tests {
+    use super::*;
+
+    const MB: u64 = 1 << 20;
+    const GB: u64 = 1 << 30;
+
+    fn trash_now(entries: usize, bytes: u64, days_until_next: Option<i64>) -> TrashNow {
+        TrashNow {
+            entries,
+            bytes,
+            retention_days: 30,
+            days_until_next,
+        }
+    }
+
+    #[test]
+    fn no_disk_change_renders_nothing() {
+        let stats = SessionStats {
+            trash_now: Some(trash_now(2, GB, Some(5))),
+            ..SessionStats::default()
+        };
+        assert!(stats.render_lines().is_empty());
+    }
+
+    #[test]
+    fn errors_without_a_disk_change_render_nothing() {
+        let mut stats = SessionStats::default();
+        stats.record_error("every session failed: codex:a1: permission denied");
+        assert!(stats.render_lines().is_empty());
+    }
+
+    #[test]
+    fn moved_only_says_not_freed_yet_and_explains_the_trash() {
+        let stats = SessionStats {
+            moved_sessions: 3,
+            moved_bytes: 1_288_490_189,
+            moved_entries: 2,
+            trash_now: Some(trash_now(2, 1_288_490_189, Some(23))),
+            ..SessionStats::default()
+        };
+        assert_eq!(
+            stats.render_lines(),
+            vec![
+                "Moved to trash this session: 3 sessions (1.2 GB) in 2 trash entries (not freed yet)",
+                "Trash now: 2 entries, 1.2 GB; next auto-delete in 23 days",
+                "Space is freed when you empty the trash.",
+            ]
+        );
+    }
+
+    #[test]
+    fn moved_and_restored_lists_both_and_singular_forms() {
+        let stats = SessionStats {
+            moved_sessions: 1,
+            moved_bytes: 500 * MB,
+            moved_entries: 1,
+            restored_entries: 1,
+            restored_bytes: 500 * MB,
+            trash_now: Some(trash_now(0, 0, None)),
+            ..SessionStats::default()
+        };
+        assert_eq!(
+            stats.render_lines(),
+            vec![
+                "Moved to trash this session: 1 session (500.0 MB) in 1 trash entry (not freed yet)",
+                "Restored from trash this session: 1 entry (500.0 MB)",
+                "Trash now: 0 entries, 0 B",
+                "Space is freed when you empty the trash.",
+            ]
+        );
+    }
+
+    #[test]
+    fn emptied_reports_bytes_freed_on_disk_without_the_trash_note() {
+        let stats = SessionStats {
+            emptied_entries: 4,
+            emptied_bytes: 2 * GB,
+            trash_now: Some(trash_now(0, 0, None)),
+            ..SessionStats::default()
+        };
+        assert_eq!(
+            stats.render_lines(),
+            vec![
+                "Permanently deleted from trash this session (x / X): 4 entries, 2.0 GB freed on disk.",
+                "Trash now: 0 entries, 0 B",
+            ]
+        );
+    }
+
+    #[test]
+    fn auto_purged_reports_bytes_freed_on_disk() {
+        let stats = SessionStats {
+            purged_entries: 1,
+            purged_bytes: 300 * MB,
+            trash_now: Some(trash_now(0, 0, None)),
+            ..SessionStats::default()
+        };
+        let lines = stats.render_lines();
+        assert_eq!(
+            lines[0],
+            "Auto-deleted by the startup trash purge this session: 1 entry, 300.0 MB freed on disk."
+        );
+    }
+
+    #[test]
+    fn errors_show_count_and_first_message_truncated_to_120_chars() {
+        let long = format!("codex:a1: {}", "x".repeat(200));
+        let mut stats = SessionStats {
+            moved_sessions: 1,
+            moved_bytes: 1024,
+            moved_entries: 1,
+            trash_now: Some(trash_now(1, 1024, Some(30))),
+            ..SessionStats::default()
+        };
+        stats.record_error(long.clone());
+        stats.record_error("second failure");
+
+        let lines = stats.render_lines();
+        let err = lines.last().expect("errors line");
+        let prefix = "Errors this session: 2 (first: ";
+        assert!(err.starts_with(prefix), "{err}");
+        let shown = err.strip_prefix(prefix).unwrap().strip_suffix(')').unwrap();
+        assert_eq!(shown.chars().count(), 120);
+        assert!(shown.ends_with("..."));
+        assert!(shown.starts_with("codex:a1: xxx"));
+    }
+
+    #[test]
+    fn errors_line_is_omitted_when_there_are_none() {
+        let stats = SessionStats {
+            moved_sessions: 1,
+            moved_bytes: 1024,
+            moved_entries: 1,
+            trash_now: Some(trash_now(1, 1024, Some(30))),
+            ..SessionStats::default()
+        };
+        assert!(stats.render_lines().iter().all(|l| !l.starts_with("Errors")));
+    }
+
+    #[test]
+    fn forever_retention_says_kept_forever() {
+        let stats = SessionStats {
+            moved_sessions: 1,
+            moved_bytes: 1024,
+            moved_entries: 1,
+            trash_now: Some(TrashNow {
+                entries: 3,
+                bytes: 1024,
+                retention_days: 0,
+                days_until_next: None,
+            }),
+            ..SessionStats::default()
+        };
+        assert!(stats
+            .render_lines()
+            .contains(&"Trash now: 3 entries, 1.0 KB; kept forever".to_string()));
+    }
+
+    #[test]
+    fn not_freed_yet_note_appears_only_when_moved_bytes_are_positive() {
+        let with_bytes = SessionStats {
+            moved_sessions: 1,
+            moved_bytes: MB,
+            moved_entries: 1,
+            trash_now: Some(trash_now(1, MB, Some(30))),
+            ..SessionStats::default()
+        };
+        let joined = with_bytes.render_lines().join("\n");
+        assert!(joined.contains("(not freed yet)"), "{joined}");
+        assert!(joined.contains("Space is freed when you empty the trash."));
+
+        let zero_bytes = SessionStats {
+            moved_sessions: 1,
+            moved_bytes: 0,
+            moved_entries: 1,
+            trash_now: Some(trash_now(1, 0, Some(30))),
+            ..SessionStats::default()
+        };
+        let joined = zero_bytes.render_lines().join("\n");
+        assert!(!joined.contains("not freed yet"), "{joined}");
+    }
+
+    #[test]
+    fn multiline_error_is_flattened_to_one_line() {
+        let mut stats = SessionStats {
+            emptied_entries: 1,
+            emptied_bytes: 10,
+            ..SessionStats::default()
+        };
+        stats.record_error("first line\nsecond line");
+        let last = stats.render_lines().pop().unwrap();
+        assert_eq!(last, "Errors this session: 1 (first: first line second line)");
+    }
+
+    #[test]
+    fn app_updates_stats_from_job_results() {
+        let root = tempfile::tempdir().unwrap();
+        let mut app = App::new(
+            Options {
+                home: root.path().to_path_buf(),
+                force: false,
+                agents: None,
+            },
+            root.path().join("trash"),
+            Mode::Trash,
+            Vec::new(),
+            false,
+        );
+        app.apply_job(JobResult::Restored {
+            id: "missing".into(),
+            bytes: 1024,
+            result: Ok(()),
+        });
+        app.apply_job(JobResult::Emptied {
+            count: 2,
+            result: Ok(4096),
+        });
+        app.apply_job(JobResult::Emptied {
+            count: 0,
+            result: Err("lock held".into()),
+        });
+        assert_eq!(app.stats.restored_entries, 1);
+        assert_eq!(app.stats.restored_bytes, 1024);
+        assert_eq!(app.stats.emptied_entries, 2);
+        assert_eq!(app.stats.emptied_bytes, 4096);
+        assert_eq!(app.stats.error_count, 1);
+        assert_eq!(app.stats.first_error.as_deref(), Some("lock held"));
+    }
+
+    #[test]
+    fn trash_now_reads_an_empty_trash_root() {
+        let root = tempfile::tempdir().unwrap();
+        let app = App::new(
+            Options {
+                home: root.path().to_path_buf(),
+                force: false,
+                agents: None,
+            },
+            root.path().join("trash"),
+            Mode::Trash,
+            Vec::new(),
+            false,
+        );
+        assert_eq!(
+            app.trash_now(),
+            Some(TrashNow {
+                entries: 0,
+                bytes: 0,
+                retention_days: config::DEFAULT_TRASH_RETENTION_DAYS,
+                days_until_next: None,
+            })
+        );
     }
 }
