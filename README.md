@@ -1,6 +1,7 @@
 # SessionZero
 
 [![npm version](https://img.shields.io/npm/v/sessionzero.svg)](https://www.npmjs.com/package/sessionzero)
+[![npm downloads](https://img.shields.io/npm/dm/sessionzero.svg)](https://www.npmjs.com/package/sessionzero)
 [![Release](https://img.shields.io/github/v/release/notnotrachit/SessionZero)](https://github.com/notnotrachit/SessionZero/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/notnotrachit/SessionZero/actions/workflows/ci.yml/badge.svg)](https://github.com/notnotrachit/SessionZero/actions/workflows/ci.yml)
